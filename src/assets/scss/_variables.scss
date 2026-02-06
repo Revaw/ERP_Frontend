@@ -1,0 +1,331 @@
+// ============================================
+// - Design System Variables
+// ============================================
+
+// ---- Breakpoints ----
+$breakpoint-xl: 1280px;
+$breakpoint-lg: 1024px;
+$breakpoint-md: 768px;
+$breakpoint-sm: 640px;
+$breakpoint-xs: 480px;
+
+// ---- Typography ----
+$font-family-base:
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  Oxygen,
+  Ubuntu,
+  sans-serif;
+$font-family-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, monospace;
+
+$font-size-xs: 0.75rem; // 12px
+$font-size-sm: 0.875rem; // 14px
+$font-size-base: 1rem; // 16px
+$font-size-lg: 1.125rem; // 18px
+$font-size-xl: 1.25rem; // 20px
+$font-size-2xl: 1.5rem; // 24px
+$font-size-3xl: 1.875rem; // 30px
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+$line-height-tight: 1.25;
+$line-height-base: 1.5;
+$line-height-relaxed: 1.75;
+
+// ---- Spacing ----
+$spacing-0: 0;
+$spacing-1: 0.25rem; // 4px
+$spacing-2: 0.5rem; // 8px
+$spacing-3: 0.75rem; // 12px
+$spacing-4: 1rem; // 16px
+$spacing-5: 1.25rem; // 20px
+$spacing-6: 1.5rem; // 24px
+$spacing-8: 2rem; // 32px
+$spacing-10: 2.5rem; // 40px
+$spacing-12: 3rem; // 48px
+$spacing-16: 4rem; // 64px
+
+// ---- Border Radius ----
+$radius-none: 0;
+$radius-sm: 0.25rem; // 4px
+$radius-md: 0.5rem; // 8px
+$radius-lg: 0.75rem; // 12px
+$radius-xl: 1rem; // 16px
+$radius-full: 9999px;
+
+// ---- Shadows ----
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-sm:
+  0 1px 3px rgba(0, 0, 0, 0.08),
+  0 1px 2px rgba(0, 0, 0, 0.04);
+$shadow-md:
+  0 4px 6px rgba(0, 0, 0, 0.07),
+  0 2px 4px rgba(0, 0, 0, 0.04);
+$shadow-lg:
+  0 10px 15px rgba(0, 0, 0, 0.08),
+  0 4px 6px rgba(0, 0, 0, 0.04);
+$shadow-xl:
+  0 20px 25px rgba(0, 0, 0, 0.1),
+  0 10px 10px rgba(0, 0, 0, 0.04);
+
+// ---- Transitions ----
+$transition-fast: 0.1s ease;
+$transition-base: 0.2s ease;
+$transition-slow: 0.3s ease;
+
+// ---- Sidebar ----
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 72px;
+
+// ============================================
+// CSS Custom Properties (pour le theming)
+// ============================================
+
+:root {
+  // ---- Brand Colors ----
+  --revaw-primary: #0b3c3b;
+  --revaw-primary-hover: #0a3534;
+  --revaw-primary-light: #c2d6cf;
+  --revaw-accent: #37996b;
+  --revaw-accent-hover: #2d8059;
+
+  // ---- Background Colors ----
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f5;
+  --bg-tertiary: #f0f0ee;
+  --bg-hover: rgba(0, 0, 0, 0.03);
+  --bg-active: rgba(0, 0, 0, 0.05);
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+
+  // ---- Text Colors ----
+  --text-primary: #37352f;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9a97;
+  --text-placeholder: #c4c4c4;
+  --text-inverse: #ffffff;
+
+  // ---- Border Colors ----
+  --border-default: #e6e6e4;
+  --border-light: #ebebea;
+  --border-focus: var(--revaw-primary);
+
+  // ---- Tag Colors (Light Mode) ----
+  --tag-yellow-bg: #fdecc8;
+  --tag-yellow-text: #93600a;
+  --tag-yellow-border: #f5d99a;
+
+  --tag-green-bg: #dbeddb;
+  --tag-green-text: #1e5c2e;
+  --tag-green-border: #b8dbb8;
+
+  --tag-red-bg: #ffe2dd;
+  --tag-red-text: #c4554d;
+  --tag-red-border: #f5c4c0;
+
+  --tag-grey-bg: #e8e8e6;
+  --tag-grey-text: #5a5a5a;
+  --tag-grey-border: #d4d4d2;
+
+  --tag-blue-bg: #d3e5ef;
+  --tag-blue-text: #2e6b8a;
+  --tag-blue-border: #a8cfe0;
+
+  // ---- Semantic Colors ----
+  --color-success: #0f7b6c;
+  --color-success-bg: #dbeddb;
+  --color-error: #eb5757;
+  --color-error-bg: #ffe2dd;
+  --color-warning: #f2994a;
+  --color-warning-bg: #fdecc8;
+  --color-info: #2f80ed;
+  --color-info-bg: #d3e5ef;
+
+  // ---- Roles Colors ----
+  --role-superadmin-bg: #e8deee;
+  --role-superadmin-text: #6940a5;
+  --role-moderator-bg: #d3e5ef;
+  --role-moderator-text: #2e6b8a;
+  --role-user-bg: #e8e8e6;
+  --role-user-text: #5a5a5a;
+
+  // ---- Sidebar ----
+  --sidebar-bg: #fbfbfa;
+  --sidebar-hover: rgba(0, 0, 0, 0.04);
+  --sidebar-active: rgba(0, 0, 0, 0.06);
+  --sidebar-border: #ebebea;
+
+  // ---- Input ----
+  --input-bg: var(--bg-primary);
+  --input-border: var(--border-default);
+  --input-focus-border: var(--revaw-primary);
+  --input-focus-ring: rgba(11, 60, 59, 0.15);
+
+  // ---- Table ----
+  --table-header-bg: var(--bg-secondary);
+  --table-row-hover: var(--bg-hover);
+  --table-border: var(--border-light);
+
+  // ---- Modal ----
+  --modal-bg: var(--bg-primary);
+  --modal-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+
+  // ---- Toast ----
+  --toast-bg: var(--bg-primary);
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  // ---- Scrollbar ----
+  --scrollbar-thumb: #d4d4d4;
+  --scrollbar-track: transparent;
+}
+
+// ============================================
+// Dark Theme
+// ============================================
+
+[data-theme='dark'] {
+  // ---- Brand Colors ----
+  --revaw-primary: #6ec9a8;
+  --revaw-primary-hover: #85d4b8;
+  --revaw-primary-light: #2d4a42;
+  --revaw-accent: #6ec9a8;
+  --revaw-accent-hover: #85d4b8;
+
+  // ---- Background Colors ----
+  --bg-primary: #191919;
+  --bg-secondary: #202020;
+  --bg-tertiary: #2c2c2c;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.08);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  // ---- Text Colors ----
+  --text-primary: #ebebeb;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6b6b6b;
+  --text-placeholder: #4a4a4a;
+  --text-inverse: #191919;
+
+  // ---- Border Colors ----
+  --border-default: #333333;
+  --border-light: #2c2c2c;
+  --border-focus: var(--revaw-primary);
+
+  // ---- Tag Colors (Dark Mode) ----
+  --tag-yellow-bg: #4a3c1d;
+  --tag-yellow-text: #f5d99a;
+  --tag-yellow-border: #5a4a24;
+
+  --tag-green-bg: #1e3d2b;
+  --tag-green-text: #7dc9a0;
+  --tag-green-border: #2a4d38;
+
+  --tag-red-bg: #4a2c2a;
+  --tag-red-text: #f5a8a3;
+  --tag-red-border: #5a3836;
+
+  --tag-grey-bg: #333333;
+  --tag-grey-text: #b0b0b0;
+  --tag-grey-border: #444444;
+
+  --tag-blue-bg: #1e3a4a;
+  --tag-blue-text: #7ec4e8;
+  --tag-blue-border: #2a4a5a;
+
+  // ---- Semantic Colors ----
+  --color-success: #6ec9a8;
+  --color-success-bg: #1e3d2b;
+  --color-error: #f5a8a3;
+  --color-error-bg: #4a2c2a;
+  --color-warning: #f5c67a;
+  --color-warning-bg: #4a3c1d;
+  --color-info: #7ec4e8;
+  --color-info-bg: #1e3a4a;
+
+  // ---- Roles Colors ----
+  --role-superadmin-bg: #3d2e4a;
+  --role-superadmin-text: #c4a8e8;
+  --role-moderator-bg: #1e3a4a;
+  --role-moderator-text: #7ec4e8;
+  --role-user-bg: #333333;
+  --role-user-text: #b0b0b0;
+
+  // ---- Sidebar ----
+  --sidebar-bg: #202020;
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+  --sidebar-active: rgba(255, 255, 255, 0.08);
+  --sidebar-border: #2c2c2c;
+
+  // ---- Input ----
+  --input-bg: var(--bg-tertiary);
+  --input-border: var(--border-default);
+  --input-focus-border: var(--revaw-primary);
+  --input-focus-ring: rgba(110, 201, 168, 0.2);
+
+  // ---- Table ----
+  --table-header-bg: var(--bg-tertiary);
+  --table-row-hover: var(--bg-hover);
+  --table-border: var(--border-default);
+
+  // ---- Modal ----
+  --modal-bg: var(--bg-secondary);
+  --modal-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+  // ---- Toast ----
+  --toast-bg: var(--bg-tertiary);
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  // ---- Scrollbar ----
+  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-track: transparent;
+}
+
+// ============================================
+// Legacy Variables (for backward compatibility)
+// ============================================
+
+$revaw-primary-color: var(--revaw-primary);
+$revaw-secondary-color: var(--revaw-primary-light);
+
+$tag-yellow-bg: var(--tag-yellow-bg);
+$tag-yellow-text: var(--tag-yellow-text);
+$tag-yellow-border: var(--tag-yellow-border);
+
+$tag-green-bg: var(--tag-green-bg);
+$tag-green-text: var(--tag-green-text);
+$tag-green-border: var(--tag-green-border);
+
+$tag-red-bg: var(--tag-red-bg);
+$tag-red-text: var(--tag-red-text);
+$tag-red-border: var(--tag-red-border);
+
+$tag-grey-bg: var(--tag-grey-bg);
+$tag-grey-text: var(--tag-grey-text);
+$tag-grey-border: var(--tag-grey-border);
+
+$tag-wait-bg: var(--tag-blue-bg);
+$tag-wait-text: var(--tag-blue-text);
+$tag-wait-border: var(--tag-blue-border);
+
+$color-error: var(--color-error);
+$color-success: var(--color-success);
+$color-warning: var(--color-warning);
+$color-info: var(--color-info);
+
+$gray-light-bg: var(--bg-secondary);
+$gray-border: var(--border-default);
+$gray-text-muted: var(--text-secondary);
+$gray-text-body: var(--text-primary);
+$gray-text-dark: var(--text-primary);
+
+$role-superadmin-bg: var(--role-superadmin-bg);
+$role-superadmin-text: var(--role-superadmin-text);
+$role-moderator-bg: var(--role-moderator-bg);
+$role-moderator-text: var(--role-moderator-text);
+$role-user-bg: var(--role-user-bg);
+$role-user-text: var(--role-user-text);

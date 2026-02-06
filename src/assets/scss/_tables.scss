@@ -1,0 +1,302 @@
+// ============================================
+// Table Styles
+// ============================================
+
+@use 'variables' as *;
+
+// ---- Custom Table ----
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--bg-primary);
+  border-radius: $radius-lg;
+  overflow: hidden;
+  border: 1px solid var(--table-border);
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid var(--table-border);
+    font-size: $font-size-sm;
+  }
+
+  th {
+    background-color: var(--table-header-bg);
+    color: var(--text-secondary);
+    font-weight: $font-weight-medium;
+    text-transform: uppercase;
+    font-size: $font-size-xs;
+    letter-spacing: 0.03em;
+  }
+
+  tbody tr {
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: var(--table-row-hover);
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  // Cell variants
+  td {
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  // Actions cell
+  .actions-cell {
+    display: flex;
+    gap: $spacing-2;
+    justify-content: flex-start;
+  }
+
+  // Clickable row
+  tr.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+
+  // Empty state
+  .empty-state {
+    text-align: center;
+    padding: $spacing-10;
+    color: var(--text-tertiary);
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: $spacing-4;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      font-size: $font-size-base;
+    }
+  }
+
+  // ---- Responsive Table (Card View on Mobile) ----
+  @media (max-width: $breakpoint-md) {
+    display: block;
+    border: none;
+    background: transparent;
+
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: block;
+      width: 100%;
+    }
+
+    tr {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-primary);
+      margin-bottom: $spacing-3;
+      border: 1px solid var(--border-default);
+      border-radius: $radius-lg;
+      padding: $spacing-4;
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: right;
+      padding: $spacing-2 0;
+      border-bottom: 1px solid var(--border-light);
+      width: 100%;
+      font-size: $font-size-sm;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &::before {
+        content: attr(data-label);
+        font-weight: $font-weight-medium;
+        color: var(--text-secondary);
+        font-size: $font-size-xs;
+        text-transform: uppercase;
+        text-align: left;
+        margin-right: $spacing-4;
+        flex-shrink: 0;
+      }
+    }
+
+    .actions-cell {
+      justify-content: flex-end;
+      width: 100%;
+      margin-top: $spacing-3;
+      padding-top: $spacing-3;
+      border-top: 1px solid var(--border-light);
+    }
+  }
+}
+
+// ---- Table Wrapper (for scroll) ----
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: $radius-lg;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: $radius-full;
+  }
+}
+
+// ---- Table Header Actions ----
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-4;
+  gap: $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+  }
+
+  .table-actions {
+    display: flex;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+  }
+}
+
+// ---- Table Footer (pagination) ----
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-4;
+  padding-top: $spacing-4;
+  border-top: 1px solid var(--border-light);
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    gap: $spacing-3;
+  }
+
+  .table-info {
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+  }
+}
+
+// ---- Pagination ----
+.pagination {
+  display: flex;
+  gap: $spacing-1;
+  align-items: center;
+
+  .pagination-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 $spacing-2;
+    border: 1px solid var(--border-default);
+    border-radius: $radius-md;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: $font-size-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-hover);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.active {
+      background-color: var(--revaw-primary);
+      border-color: var(--revaw-primary);
+      color: var(--text-inverse);
+    }
+  }
+
+  .pagination-ellipsis {
+    padding: 0 $spacing-2;
+    color: var(--text-tertiary);
+  }
+}
+
+// ---- Sortable Header ----
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  .sort-icon {
+    margin-left: $spacing-1;
+    opacity: 0.5;
+    transition: opacity $transition-fast;
+  }
+
+  &.sorted {
+    color: var(--revaw-primary);
+
+    .sort-icon {
+      opacity: 1;
+    }
+  }
+}
+
+// ---- Table Loading State ----
+.table-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-10;
+  color: var(--text-tertiary);
+}
+
+// ---- Compact Table ----
+.custom-table--compact {
+  th,
+  td {
+    padding: $spacing-2 $spacing-3;
+  }
+}
+
+// ---- Striped Table ----
+.custom-table--striped {
+  tbody tr:nth-child(even) {
+    background-color: var(--bg-secondary);
+  }
+}

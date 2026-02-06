@@ -1,0 +1,459 @@
+// ============================================
+// - Main Stylesheet
+// ============================================
+
+// Import des composants partiels
+@use 'buttons';
+@use 'forms';
+@use 'tables';
+
+// ============================================
+// Google Fonts - Inter
+// ============================================
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// ============================================
+// CSS Reset
+// ============================================
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+// ============================================
+// Body
+// ============================================
+body {
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color $transition-base,
+    color $transition-base;
+}
+
+// ============================================
+// Media
+// ============================================
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+// ============================================
+// Form Elements Reset
+// ============================================
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+// ============================================
+// Typography
+// ============================================
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-primary);
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-tight;
+}
+
+h1 {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-6;
+  letter-spacing: -0.02em;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+    margin-bottom: $spacing-4;
+  }
+}
+
+h2 {
+  font-size: $font-size-2xl;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xl;
+  }
+}
+
+h3 {
+  font-size: $font-size-xl;
+  margin-bottom: $spacing-3;
+}
+
+h4 {
+  font-size: $font-size-lg;
+  margin-bottom: $spacing-2;
+}
+
+p {
+  color: var(--text-primary);
+  margin-bottom: $spacing-4;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+small {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+}
+
+// ============================================
+// Vue App Root
+// ============================================
+#app {
+  isolation: isolate;
+  min-height: 100vh;
+}
+
+// ============================================
+// Links
+// ============================================
+a {
+  color: var(--revaw-primary);
+  transition: color $transition-fast;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// ============================================
+// Selection
+// ============================================
+::selection {
+  background-color: var(--revaw-primary-light);
+  color: var(--text-primary);
+}
+
+// ============================================
+// Scrollbar
+// ============================================
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: $radius-full;
+
+  &:hover {
+    background: var(--text-tertiary);
+  }
+}
+
+// Firefox
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+// ============================================
+// Utility Classes
+// ============================================
+
+// Text utilities
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+.text-success {
+  color: var(--color-success);
+}
+.text-error {
+  color: var(--color-error);
+}
+.text-warning {
+  color: var(--color-warning);
+}
+
+// Font weights
+.font-normal {
+  font-weight: $font-weight-normal;
+}
+.font-medium {
+  font-weight: $font-weight-medium;
+}
+.font-semibold {
+  font-weight: $font-weight-semibold;
+}
+.font-bold {
+  font-weight: $font-weight-bold;
+}
+
+// Spacing utilities
+.mt-0 {
+  margin-top: 0;
+}
+.mt-2 {
+  margin-top: $spacing-2;
+}
+.mt-4 {
+  margin-top: $spacing-4;
+}
+.mt-6 {
+  margin-top: $spacing-6;
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-2 {
+  margin-bottom: $spacing-2;
+}
+.mb-4 {
+  margin-bottom: $spacing-4;
+}
+.mb-6 {
+  margin-bottom: $spacing-6;
+}
+
+// Display utilities
+.hidden {
+  display: none;
+}
+.block {
+  display: block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+
+// Flex utilities
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-2 {
+  gap: $spacing-2;
+}
+.gap-4 {
+  gap: $spacing-4;
+}
+
+// ============================================
+// Card Component
+// ============================================
+.card {
+  @include card;
+
+  &--hover {
+    @include hover-lift;
+  }
+}
+
+// ============================================
+// Page Layout
+// ============================================
+.page {
+  padding: $spacing-6;
+  animation: fadeIn $transition-slow ease-out;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  &__header {
+    margin-bottom: $spacing-6;
+
+    @media (max-width: $breakpoint-md) {
+      margin-bottom: $spacing-4;
+    }
+  }
+
+  &__title {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin-bottom: $spacing-2;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $font-size-2xl;
+    }
+  }
+
+  &__subtitle {
+    font-size: $font-size-base;
+    color: var(--text-secondary);
+  }
+}
+
+// ============================================
+// Empty State
+// ============================================
+.empty-state {
+  text-align: center;
+  padding: $spacing-12 $spacing-6;
+  color: var(--text-tertiary);
+
+  &__icon {
+    font-size: 48px;
+    margin-bottom: $spacing-4;
+    opacity: 0.5;
+  }
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+    margin-bottom: $spacing-2;
+  }
+
+  &__text {
+    font-size: $font-size-sm;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+// ============================================
+// Divider
+// ============================================
+.divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: $spacing-6 0;
+}
+
+// ============================================
+// Badge
+// ============================================
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+
+  &--success {
+    background-color: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  &--error {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  &--warning {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  &--info {
+    background-color: var(--color-info-bg);
+    color: var(--color-info);
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================
+// Transitions for Theme Switch
+// ============================================
+.theme-transition {
+  transition:
+    background-color $transition-slow,
+    color $transition-slow,
+    border-color $transition-slow,
+    box-shadow $transition-slow;
+}
