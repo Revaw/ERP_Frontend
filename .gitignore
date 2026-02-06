@@ -28,6 +28,8 @@ src-tauri/tauri.conf.json.local
 src-tauri/tauri.conf.json.override
 
 private.key
+public.key
+latest.json
 
 
 ######################################

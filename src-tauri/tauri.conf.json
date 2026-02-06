@@ -35,12 +35,12 @@
     ]
   },
   "plugins": {
-  "updater": {
-    "endpoints": [
-      "https://github.com/Revaw/ERP_Frontend/releases/latest/download/latest.json"
-    ],
-    "dialog": true,
-    "pubkey": "AKUldSUU9VWG9TVjBHY2M1SnZMS0FETWQ2MjBwL0dXU0ppbGFTUW9hdWlkS0xZNm5Tbi9PSDBBcVcK"
+    "updater": {
+      "endpoints": [
+        "https://github.com/Revaw/ERP_Frontend/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "AKUldSUU9VWG9TVjBHY2M1SnZMS0FETWQ2MjBwL0dXU0ppbGFTUW9hdWlkS0xZNm5Tbi9PSDBBcVcK"
+    }
   }
-}
 }
