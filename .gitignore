@@ -27,6 +27,9 @@ src-tauri/gen/
 src-tauri/tauri.conf.json.local
 src-tauri/tauri.conf.json.override
 
+private.key
+
+
 ######################################
 # OS / IDE
 ######################################
