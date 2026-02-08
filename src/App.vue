@@ -1,9 +1,7 @@
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
 import { computed, onMounted } from 'vue'
-import { check } from '@tauri-apps/plugin-updater'
-import { ask } from '@tauri-apps/plugin-dialog'
-import { relaunch } from '@tauri-apps/plugin-process'
+import { isTauri } from '@/utils/tauri'
 import Sidebar from './components/Structure/Sidebar.vue'
 import { useAuthStore } from './stores/auth.js'
 import ToastContainer from './components/ui/ToastContainer.vue'
@@ -11,6 +9,12 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 onMounted(async () => {
+  if (!isTauri()) return
+
+  const { check } = await import('@tauri-apps/plugin-updater')
+  const { ask } = await import('@tauri-apps/plugin-dialog')
+  const { relaunch } = await import('@tauri-apps/plugin-process')
+
   try {
     const update = await check()
     if (update) {

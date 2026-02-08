@@ -248,7 +248,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, reactive } from 'vue'
-import { open } from '@tauri-apps/plugin-shell'
+import { isTauri } from '@/utils/tauri'
 //store
 import { useAuthStore } from '@/stores/auth.js'
 import { useToastStore } from '@/stores/toast'
@@ -555,7 +555,12 @@ const handleUpdateVersion = async () => {
 // ouvrir le passport
 const openPassport = async () => {
   const url = `https://www.revaw.fr/passport/${battery.value.NumeroSerie}/${battery.value.CodeQr}`
-  await open(url)
+  if (isTauri()) {
+    const { open } = await import('@tauri-apps/plugin-shell')
+    open(url)
+  } else {
+    window.open(url, '_blank')
+  }
 }
 
 onMounted(async () => {
