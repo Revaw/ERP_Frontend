@@ -283,7 +283,12 @@ Les prestataires externes sont des partenaires qui interviennent sur les batteri
 |--------|--------------|-----------|
 | Voir la liste des batteries | ✅ | Batteries expédiées uniquement |
 | Voir le détail d'une batterie | ✅ | Batteries expédiées uniquement |
+| Voir le stock disponible | ✅ | Comptage agrégé par capacité kWh |
 | Modifier la version | ✅ | Batteries expédiées uniquement |
+| Voir la date de fin de garantie | ✅ | Calculée automatiquement depuis la BOM |
+| Consulter les versions disponibles | ✅ | Liste publique avec lien PDF du manuel |
+| Faire une demande de SAV | ✅ | Batteries expédiées uniquement |
+| Suivre ses demandes SAV | ✅ | Statut mis à jour automatiquement |
 | Accéder à l'ERP | ❌ | Jamais |
 | Voir les batteries en production | ❌ | Jamais |
 
@@ -292,6 +297,77 @@ Les prestataires externes sont des partenaires qui interviennent sur les batteri
 - Compte créé par un **superadmin** via l'ERP
 - Rôle : `Prestataire Externe`
 - Connexion sur un **portail dédié** (pas l'ERP)
+
+---
+
+## Demandes SAV (prestataire)
+
+Le prestataire peut faire une **demande de SAV** depuis le portail pour une batterie expédiée.
+
+### Le parcours d'une demande SAV
+
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│              │      │              │      │              │      │              │
+│   DEMANDE    │ ───► │   REÇUE      │ ───► │   RÉPARÉE    │ ───► │  RÉCUPÉRÉE   │
+│  (Portail)   │      │ (Production) │      │    (ERP)     │      │ (Disparaît)  │
+│              │      │              │      │              │      │              │
+└──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
+  Prestataire           Batterie              Équipe SAV           Batterie
+  fait sa demande       scannée en SAV        marque "réparée"     ré-expédiée
+```
+
+### Les statuts de la demande
+
+| Statut | Ce que voit le prestataire | Comment on y arrive ? |
+|--------|----------------------------|----------------------|
+| **Pending** | "Demande envoyée, en attente" | Le prestataire crée la demande |
+| **Received** | "Batterie reçue, en cours" | La production scanne la batterie en SAV |
+| **Repaired** | "Réparée, prête à être renvoyée" | L'équipe SAV passe le statut à "réparée" |
+| **Closed** | *(disparaît de la liste)* | La batterie est ré-expédiée |
+
+### Points importants
+
+- Le statut se met à jour **automatiquement** quand le prestataire consulte sa liste
+- **Une seule demande active** par batterie à la fois
+- La demande ne modifie **rien** au workflow existant (production, sync, ERP)
+
+---
+
+## Versions logicielles
+
+Une liste de versions logicielles est maintenue en base de données. Chaque version est associée à un lien vers le **manuel PDF** correspondant.
+
+### Qui peut consulter les versions ?
+
+| Qui | Accès |
+|-----|-------|
+| Tout le monde (sans connexion) | ✅ Route publique |
+| Portail prestataire | ✅ Dropdown de sélection |
+| Passport batterie | ✅ Lien vers le PDF |
+
+### Comment ajouter une version ?
+
+L'ajout se fait via un **script en ligne de commande** (par un administrateur technique) :
+```
+node scripts/addVersion.js 1.0.5.1 "Version stable" "https://lien-vers-le-pdf.pdf"
+```
+
+---
+
+## Stock (vue prestataire)
+
+Les prestataires peuvent consulter le **nombre de batteries en stock** agrégé par capacité.
+
+| Capacité | Signification |
+|----------|---------------|
+| **13 kWh** | Batteries 271 Ah |
+| **12 kWh** | Batteries 250 Ah |
+| **8.4 kWh** | Batteries 175 Ah |
+
+> Une batterie est "en stock" si elle est **testée** (finish effectué) mais **pas encore expédiée**.
+
+> Le stock de pièces détachées n'affiche que les **pièces actives** (les pièces désactivées sont masquées).
 
 ---
 
@@ -305,8 +381,10 @@ Les prestataires externes sont des partenaires qui interviennent sur les batteri
 | **Scanette** | Lecteur de codes-barres utilisé en production |
 | **CRON** | Tâche automatique qui s'exécute à heure fixe |
 | **Sync** | Synchronisation - Transfert automatique des données |
+| **Version** | Version du logiciel embarqué dans la batterie, avec lien vers le manuel PDF |
+| **SavRequest** | Demande de SAV faite par un prestataire, avec suivi automatique du statut |
 
 ---
 
-_Document généré le 30/01/2026_
-_Version 1.2 - Ajout prestataires externes et modification de version_
+_Document généré le 16/02/2026_
+_Version 1.4 - Ajout demandes SAV prestataire (SavRequest avec suivi dynamique), masquage champs internes_

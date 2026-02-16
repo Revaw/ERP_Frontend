@@ -355,12 +355,45 @@ L'ERP est une application web complète permettant la gestion des batteries, du 
 │  • /api/locations/*  → verifyToken + authorizeScope("ERP_USER")                │
 │  • /api/bom/*        → verifyToken + authorizeScope("ERP_USER")                │
 │  • /api/sav/*        → verifyToken + authorizeScope("ERP_USER")                │
-│  • /api/provider/*   → verifyToken + authorizeScope("PROVIDER")                │
+│  • /api/provider/*              → verifyToken + authorizeScope("PROVIDER")     │
+│  • /api/provider/sav-requests/*→ verifyToken + authorizeScope("PROVIDER")     │
+│  • /api/versions/*             → Publique (sans authentification)              │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.1.2 Prestataires externes (external_provider)
+### 3.1.2 Collection Versions (route publique)
+
+La collection `versions` stocke la liste des versions logicielles disponibles avec un lien vers le manuel PDF correspondant.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    COLLECTION VERSIONS (route publique)                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  MODÈLE:                                                                        │
+│  ───────                                                                        │
+│  • version      (String, unique, requis) - Ex: "1.0.5.1"                       │
+│  • description  (String, optionnel)      - Description de la version           │
+│  • path         (String, optionnel)      - URL vers le PDF du manuel           │
+│  • timestamps   (createdAt, updatedAt)   - Dates auto                          │
+│                                                                                  │
+│  ROUTE:                                                                         │
+│  ──────                                                                         │
+│  GET /api/versions                                                              │
+│       → Retourne toutes les versions (version + path), triées par date desc    │
+│       → Route PUBLIQUE (pas d'authentification requise)                         │
+│       → Utilisée par : portail prestataire (dropdown), passport batterie (PDF) │
+│                                                                                  │
+│  AJOUT DE VERSIONS:                                                             │
+│  ──────────────────                                                             │
+│  Via script CLI : node scripts/addVersion.js <version> [description] [path]    │
+│  Exemple : node scripts/addVersion.js 1.0.5.1 "Version stable" "https://..."  │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.1.3 Prestataires externes (external_provider)
 
 Les prestataires externes sont des utilisateurs ayant un accès limité au système. Ils ne peuvent pas accéder à l'ERP mais disposent de routes API dédiées pour :
 
@@ -374,9 +407,19 @@ Les prestataires externes sont des utilisateurs ayant un accès limité au syst�
 │                                                                                  │
 │  GET  /api/provider/batteries                                                   │
 │       → Liste des batteries expédiées (TimestampExpedition ≠ null)              │
-│       → Champs retournés : NumeroSerie, TimestampExpedition, sav_history,       │
+│       → Champs retournés : NumeroSerie, TimestampExpedition,                    │
+│                            sav_history (sans parts_used),                       │
 │                            sav_status, version, isWarrantyRevoked,              │
-│                            version_history                                       │
+│                            version_history, warrantyEndDate                     │
+│       → Champs masqués : type, TimestampTestDone, sav_history[].parts_used    │
+│       → warrantyEndDate calculé en interne via BOM (type utilisé puis retiré) │
+│                                                                                  │
+│  GET  /api/provider/stock                                                       │
+│       → Nombre de batteries en stock agrégé par capacité kWh                   │
+│       → En stock = TimestampTestDone présent, TimestampExpedition absent,       │
+│         isCanceled = false                                                       │
+│       → Retourne : { "13 kWh": N, "12 kWh": N, "8.4 kWh": N }                │
+│       → La capacité est déduite du numéro de série (code Ah après "48v")       │
 │                                                                                  │
 │  GET  /api/provider/batteries/:id                                               │
 │       → Détails d'une batterie par NumeroSerie (si expédiée)                    │
@@ -395,6 +438,68 @@ Les prestataires externes sont des utilisateurs ayant un accès limité au syst�
 │  • Toutes les routes requièrent : verifyToken + authorizeScope("PROVIDER")      │
 │  • Les prestataires ne peuvent voir QUE les batteries expédiées                 │
 │  • Les prestataires ne peuvent modifier QUE les batteries expédiées             │
+│  • Le stock est accessible en lecture (comptage agrégé uniquement)              │
+│  • Les champs internes (type, TimestampTestDone, parts_used) sont masqués      │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.1.4 Demandes SAV prestataire (SavRequest)
+
+Le prestataire peut créer des demandes SAV depuis le portail. Le statut de la demande se résout **dynamiquement** à partir des données Battery existantes, sans modifier le backend existant.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    DEMANDES SAV (/api/provider/sav-requests)                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  MODÈLE SavRequest:                                                             │
+│  ──────────────────                                                             │
+│  • batterySerial  (String, requis)     - NumeroSerie de la batterie            │
+│  • requestedBy    (ObjectId ref User)  - Le provider qui fait la demande       │
+│  • requestedAt    (Date, auto)         - Date de la demande                    │
+│  • reason         (String, requis)     - Motif du client (min 5 caractères)    │
+│  • status         (Enum)              - pending | received | repaired | closed │
+│  • timestamps     (createdAt, updatedAt)                                       │
+│                                                                                  │
+│  ROUTES:                                                                        │
+│  ───────                                                                        │
+│  POST /api/provider/sav-requests                                               │
+│       → Crée une demande SAV                                                   │
+│       → Body: { batterySerial: "RW-48v...", reason: "Défaut constaté..." }    │
+│       → Vérifie que la batterie existe et est expédiée                         │
+│       → Vérifie qu'il n'y a pas déjà une demande active pour ce serial        │
+│       → Retourne 409 si demande déjà en cours                                 │
+│                                                                                  │
+│  GET  /api/provider/sav-requests                                               │
+│       → Liste les demandes du provider connecté (non-closed)                   │
+│       → Résolution DYNAMIQUE du statut (comparaison avec Battery)             │
+│       → Les demandes "closed" disparaissent de la liste                        │
+│                                                                                  │
+│  TRANSITIONS DE STATUT (automatiques au GET):                                  │
+│  ════════════════════════════════════════════                                   │
+│                                                                                  │
+│  ┌─────────┐     ┌──────────┐     ┌──────────┐     ┌────────┐                │
+│  │ PENDING │────►│ RECEIVED │────►│ REPAIRED │────►│ CLOSED │                │
+│  └─────────┘     └──────────┘     └──────────┘     └────────┘                │
+│   Demande         Batterie         Dernier SAV      Dernier SAV               │
+│   envoyée         reçue en         a status         a date_depart             │
+│                   production       "réparée"        (= ré-expédiée)           │
+│                   (sav_status                                                  │
+│                    = true)                                                      │
+│                                                                                  │
+│  RÈGLES DE RÉSOLUTION:                                                         │
+│  ─────────────────────                                                         │
+│  • pending  + battery.sav_status = true           → received                  │
+│  • received + dernier sav_history.status="réparée"→ repaired                  │
+│  • repaired + dernier sav_history.date_depart set → closed (disparaît)        │
+│                                                                                  │
+│  PRINCIPE:                                                                      │
+│  ─────────                                                                      │
+│  • Aucune modification du backend existant (Battery, sync, cron)              │
+│  • Le statut se déduit des données Battery existantes                         │
+│  • La résolution se fait au moment du GET (pas de cron supplémentaire)        │
+│  • Les updates de statut sont persistés en bulk                               │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -629,6 +734,9 @@ La version d'une batterie peut être modifiée depuis l'ERP ou par un prestatair
 │                                                                                  │
 │  3. Transaction: tout réussit ou tout annulé                                    │
 │                                                                                  │
+│  NOTE: La liste des stocks n'affiche que les pièces ACTIVES                    │
+│  (SparePartStock filtré par part.active ≠ false)                               │
+│                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -685,6 +793,34 @@ La version d'une batterie peut être modifiée depuis l'ERP ou par un prestatair
       ]
     }
   ]
+}
+```
+
+#### Collection: sav_requests (Demandes SAV prestataire)
+
+```javascript
+{
+  _id: ObjectId,
+  batterySerial: "RW-48v2710210",        // NumeroSerie de la batterie
+  requestedBy: ObjectId("..."),           // Ref User (le provider)
+  requestedAt: "2026-02-16T10:00:00",
+  reason: "Défaut constaté sur le BMS",  // Motif du client
+  status: "pending",                      // pending | received | repaired | closed
+  createdAt: "2026-02-16T10:00:00",
+  updatedAt: "2026-02-16T10:00:00"
+}
+```
+
+#### Collection: versions (Versions logicielles)
+
+```javascript
+{
+  _id: ObjectId,
+  version: "1.0.5.1",                   // Unique, requis
+  description: "Version stable",         // Optionnel
+  path: "https://example.com/v1.0.5.1.pdf", // URL vers le manuel PDF
+  createdAt: "2026-02-13T14:00:00",
+  updatedAt: "2026-02-13T14:00:00"
 }
 ```
 
@@ -852,14 +988,24 @@ La version d'une batterie peut être modifiée depuis l'ERP ou par un prestatair
 
 - `back/src/services/batteries.service.js` - Logique métier batteries
 - `back/src/services/production.service.js` - Déduction stock
-- `back/src/services/stock.service.js` - Mouvements stock
+- `back/src/services/stock.service.js` - Mouvements stock (filtre pièces actives)
 - `back/src/services/bom.service.js` - Gestion BOM
 - `back/src/models/Battery.model.js` - Schéma batterie
 - `back/src/models/BOM.model.js` - Schéma nomenclature
+- `back/src/models/Version.model.js` - Schéma versions logicielles
+- `back/src/controllers/provider.controller.js` - Contrôleur routes prestataires
+- `back/src/controllers/savRequest.controller.js` - Contrôleur demandes SAV
+- `back/src/controllers/version.controller.js` - Contrôleur route versions
+- `back/src/models/SavRequest.model.js` - Schéma demandes SAV prestataire
+- `back/src/validators/savRequest.validator.js` - Validation demandes SAV
+- `back/src/routes/Provider.routes.js` - Routes prestataires
+- `back/src/routes/SavRequest.routes.js` - Routes demandes SAV
+- `back/src/routes/Version.routes.js` - Route publique versions
+- `back/scripts/addVersion.js` - Script CLI ajout de version
 - `front/src/views/Batterie-views/` - Vues batteries
 - `front/src/components/batteries/` - Composants batteries
 
 ---
 
-_Document généré le 30/01/2026_
-_Version 1.3 - Ajout système prestataires externes (scopes, routes /api/provider)_
+_Document généré le 16/02/2026_
+_Version 1.5 - Ajout demandes SAV prestataire (SavRequest), masquage champs internes GET provider (type, TimestampTestDone, parts\_used)_
