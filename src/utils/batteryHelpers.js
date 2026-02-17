@@ -83,37 +83,22 @@ export function getDaysSinceSavArrival(battery) {
 }
 
 /**
- * Détermine le libellé SAV spécifique pour l'affichage (En cours vs En stock).
- * @param {Object} battery - L'objet batterie
- * @returns {String} "En stock" (si réparée mais pas partie) ou "En cours"
+ * Détermine le libellé SAV depuis le statut de l'intervention active.
+ * @param {Object} battery - L'objet batterie (avec interventionStatus du backend)
+ * @returns {String} "En cours" ou "Réparée"
  */
 export function getSavStatusText(battery) {
-  const lastEntry = getLastSavEntry(battery)
-  if (!lastEntry) return 'SAV'
-
-  // Si réparée mais pas de date_depart => Elle est physiquement "En stock" (prête)
-  if (lastEntry.status === 'réparée' && !lastEntry.date_depart) {
-    return 'En stock'
-  }
-
-  // Sinon => Toujours en cours de diagnostic ou réparation
+  if (battery.interventionStatus === 'réparée') return 'Réparée'
   return 'En cours'
 }
 
 /**
- * Détermine la couleur du tag pour le SAV.
+ * Détermine la couleur du tag SAV depuis le statut de l'intervention active.
  * @param {Object} battery
- * @returns {String} 'blue-tag' (prête) ou 'red-tag' (problème en cours)
+ * @returns {String} 'green-tag' (réparée) ou 'red-tag' (en cours)
  */
 export function getSavStatusVariant(battery) {
-  const lastEntry = getLastSavEntry(battery)
-  if (!lastEntry) return 'red-tag'
-
-  // Si réparée et en attente de départ
-  if (lastEntry.status === 'réparée' && !lastEntry.date_depart) {
-    return 'blue-tag'
-  }
-
+  if (battery.interventionStatus === 'réparée') return 'green-tag'
   return 'red-tag'
 }
 

@@ -45,6 +45,7 @@ export async function getBatteriesPaginated(page = 1, limit = 100, filters = {})
     if (filters.wait) params.append('wait', filters.wait)
     if (filters.isCanceled !== undefined) params.append('isCanceled', filters.isCanceled)
     if (filters.kwh) params.append('kwh', filters.kwh)
+    if (filters.serial) params.append('serial', filters.serial)
 
     const response = await axios.get(`${API_URL}?${params.toString()}`)
     return response.data

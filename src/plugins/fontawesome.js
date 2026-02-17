@@ -52,6 +52,7 @@ import {
   faBoxesStacked,
   faGear,
   faBoxArchive,
+  faInbox,
 
   // Users
   faUsersGear,
@@ -124,6 +125,7 @@ library.add(
   faBoxesStacked,
   faGear,
   faBoxArchive,
+  faInbox,
 
   // Users
   faUsersGear,

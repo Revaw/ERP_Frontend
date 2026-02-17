@@ -7,6 +7,17 @@ import { API_BASE_URL } from '@/config/api.js'
 
 const API_URL = `${API_BASE_URL}/sav`
 
+// Récupérer toutes les demandes SAV en cours (vue ERP)
+export async function getSavRequests() {
+  try {
+    const res = await axios.get(`${API_URL}/requests`)
+    return res.data
+  } catch (err) {
+    console.error('Erreur API getSavRequests:', err)
+    throw err
+  }
+}
+
 // Récupérer l'intervention active (données techniques)
 export async function getActiveIntervention(serial) {
   try {

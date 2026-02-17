@@ -64,6 +64,17 @@
             </select>
           </div>
         </div>
+
+        <div class="filters-group">
+          <span class="filters-group__label">N° Série</span>
+          <div class="form-group form-group--inline">
+            <input
+              type="text"
+              v-model="filters.serial"
+              placeholder="ex: 458"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -139,6 +150,7 @@ const filters = ref({
   startDate: null, // Date début (Filtre sur date expédition)
   endDate: null, // Date fin
   kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8.4)
+  serial: '', // Recherche par numéro de série
 })
 
 //Surveille l'objet 'filters'.

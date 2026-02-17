@@ -8,16 +8,18 @@
       </div>
     </div>
 
-    <!-- CONTENU STATIQUE -->
+    <!-- CONTENU -->
     <ul class="battery-card__details">
       <li class="battery-card__serial">
         <span class="battery-card__label">N° Série</span>
         <strong>{{ battery.NumeroSerie }}</strong>
       </li>
-      <li v-for="d in datesToShow" :key="d.label">
-        <span class="battery-card__label">{{ d.label }}</span>
-        <span>{{ d.value }}</span>
-      </li>
+      <slot name="details">
+        <li v-for="d in datesToShow" :key="d.label">
+          <span class="battery-card__label">{{ d.label }}</span>
+          <span>{{ d.value }}</span>
+        </li>
+      </slot>
     </ul>
   </RouterLink>
 </template>
@@ -80,7 +82,8 @@ const datesToShow = computed(() => getBatteryDisplayDates(props.battery))
     flex-direction: column;
     gap: $spacing-2;
 
-    li {
+    li,
+    :slotted(li) {
       display: flex;
       justify-content: space-between;
       align-items: center;
