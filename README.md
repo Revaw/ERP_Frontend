@@ -21,5 +21,5 @@
 │ MongoDB Atlas │
 │ Collections: users, printed_serial, spareparts, │
 │ sparepartstocks, sparepartmovements, boms, locations, │
-│ savinterventions │
+│ savinterventions, savrequests │
 └─────────────────────────────────────────────────────────────┘

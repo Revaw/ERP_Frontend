@@ -289,6 +289,8 @@ Les prestataires externes sont des partenaires qui interviennent sur les batteri
 | Consulter les versions disponibles | ✅ | Liste publique avec lien PDF du manuel |
 | Faire une demande de SAV | ✅ | Batteries expédiées uniquement |
 | Suivre ses demandes SAV | ✅ | Statut mis à jour automatiquement |
+| Modifier le motif d'une demande SAV | ✅ | Uniquement si statut "En attente" |
+| Annuler une demande SAV | ✅ | Uniquement si statut "En attente" |
 | Accéder à l'ERP | ❌ | Jamais |
 | Voir les batteries en production | ❌ | Jamais |
 
@@ -325,6 +327,14 @@ Le prestataire peut faire une **demande de SAV** depuis le portail pour une batt
 | **Received** | "Batterie reçue, en cours" | La production scanne la batterie en SAV |
 | **Repaired** | "Réparée, prête à être renvoyée" | L'équipe SAV passe le statut à "réparée" |
 | **Closed** | *(disparaît de la liste)* | La batterie est ré-expédiée |
+
+### Ce que le prestataire peut faire sur une demande
+
+| Action | Possible ? | Condition |
+|--------|------------|-----------|
+| Modifier le motif | ✅ | Statut "En attente" uniquement |
+| Annuler la demande | ✅ | Statut "En attente" uniquement |
+| Modifier / annuler | ❌ | Dès que REVAW a reçu la batterie |
 
 ### Points importants
 
@@ -387,4 +397,4 @@ Les prestataires peuvent consulter le **nombre de batteries en stock** agrégé 
 ---
 
 _Document généré le 16/02/2026_
-_Version 1.4 - Ajout demandes SAV prestataire (SavRequest avec suivi dynamique), masquage champs internes_
+_Version 1.5 - Ajout modification motif et annulation de demande SAV (pending uniquement), règle visibilité ERP (pending+received affiché, masqué à repaired)_

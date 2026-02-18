@@ -464,17 +464,29 @@ Le prestataire peut créer des demandes SAV depuis le portail. Le statut de la d
 │                                                                                  │
 │  ROUTES:                                                                        │
 │  ───────                                                                        │
-│  POST /api/provider/sav-requests                                               │
+│  POST /api/savRequest                                                           │
 │       → Crée une demande SAV                                                   │
 │       → Body: { batterySerial: "RW-48v...", reason: "Défaut constaté..." }    │
 │       → Vérifie que la batterie existe et est expédiée                         │
 │       → Vérifie qu'il n'y a pas déjà une demande active pour ce serial        │
 │       → Retourne 409 si demande déjà en cours                                 │
 │                                                                                  │
-│  GET  /api/provider/sav-requests                                               │
+│  GET  /api/savRequest                                                           │
 │       → Liste les demandes du provider connecté (non-closed)                   │
 │       → Résolution DYNAMIQUE du statut (comparaison avec Battery)             │
 │       → Les demandes "closed" disparaissent de la liste                        │
+│                                                                                  │
+│  PATCH /api/savRequest/:id/reason                                               │
+│       → Modifie le motif d'une demande                                         │
+│       → Body: { reason: "Nouveau motif..." }                                   │
+│       → Autorisé UNIQUEMENT si status = "pending"                              │
+│       → Erreur 400 si demande déjà prise en charge                            │
+│                                                                                  │
+│  DELETE /api/savRequest/:id                                                     │
+│       → Supprime (annule) une demande                                          │
+│       → Autorisé UNIQUEMENT si status = "pending"                              │
+│       → Erreur 400 si demande déjà prise en charge                            │
+│       → Retourne 204 No Content                                                │
 │                                                                                  │
 │  TRANSITIONS DE STATUT (automatiques au GET):                                  │
 │  ════════════════════════════════════════════                                   │
@@ -493,6 +505,19 @@ Le prestataire peut créer des demandes SAV depuis le portail. Le statut de la d
 │  • pending  + battery.sav_status = true           → received                  │
 │  • received + dernier sav_history.status="réparée"→ repaired                  │
 │  • repaired + dernier sav_history.date_depart set → closed (disparaît)        │
+│                                                                                  │
+│  VISIBILITÉ SELON L'ACTEUR:                                                    │
+│  ──────────────────────────                                                    │
+│  • ERP (GET /api/sav/requests) : affiche pending + received                   │
+│    (le motif reste visible pendant la réparation, masqué dès "repaired")      │
+│  • Provider (GET /api/savRequest) : affiche pending + received + repaired      │
+│    (disparaît uniquement à "closed")                                           │
+│                                                                                  │
+│  ACTIONS PROVIDER SELON STATUT:                                                │
+│  ─────────────────────────────                                                 │
+│  • pending  → peut modifier le motif (PATCH) + peut annuler (DELETE)          │
+│  • received → lecture seule (REVAW a pris en charge)                          │
+│  • repaired → lecture seule                                                    │
 │                                                                                  │
 │  PRINCIPE:                                                                      │
 │  ─────────                                                                      │

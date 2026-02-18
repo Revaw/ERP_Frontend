@@ -1141,6 +1141,76 @@ Un processus automatique (CRON) déduit le stock des pièces lorsqu'une batterie
 
 ---
 
+---
+
+## PARTIE 8 : DEMANDES SAV PROVIDER (SavRequest)
+
+### 8.1 Description
+
+Les `SavRequest` sont les demandes de retour en garantie émises par les **providers** depuis leur portail dédié. Elles sont distinctes des `SavIntervention` (fiche technique interne REVAW).
+
+### 8.2 Cycle de vie du statut
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      CYCLE DE VIE SAVREQUESTS                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   pending ──► received ──► repaired ──► closed                                  │
+│                                                                                  │
+│   pending  : Demande créée, batterie pas encore reçue physiquement              │
+│   received : battery.sav_status = true  (batterie arrivée chez REVAW)          │
+│   repaired : lastSav.status = "réparée" (réparation terminée)                  │
+│   closed   : lastSav.date_depart != null (batterie repartie chez le provider)   │
+│                                                                                  │
+│   ⚠ La résolution est DYNAMIQUE : elle se calcule à partir des données Battery  │
+│     et se persiste en base lors de chaque appel API (lazy update / bulkWrite)   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 8.3 Visibilité selon l'acteur
+
+| Statut | Vue ERP (opérateur) | Vue Provider (portail) |
+|--------|--------------------|-----------------------|
+| `pending` | ✅ affiché | ✅ affiché |
+| `received` | ✅ affiché (motif utile à l'opérateur) | ✅ affiché |
+| `repaired` | ❌ masqué | ✅ affiché |
+| `closed` | ❌ masqué | ❌ masqué |
+
+### 8.4 Actions provider selon le statut
+
+| Statut | Modifier le motif | Supprimer la demande |
+|--------|------------------|---------------------|
+| `pending` | ✅ `PATCH /savRequest/:id/reason` | ✅ `DELETE /savRequest/:id` |
+| `received` | ❌ | ❌ |
+| `repaired` | ❌ | ❌ |
+
+### 8.5 API SavRequest
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      ENDPOINTS SAVREQUESTS                                       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  PORTAIL PROVIDER (/api/savRequest)                                             │
+│  ─────────────────────────────────                                              │
+│  POST   /api/savRequest              Créer une demande SAV                      │
+│  GET    /api/savRequest              Mes demandes (non-closed, résolution dyn.) │
+│  PATCH  /api/savRequest/:id/reason   Modifier le motif (pending uniquement)     │
+│  DELETE /api/savRequest/:id          Annuler la demande (pending uniquement)    │
+│                                                                                  │
+│  ERP INTERNE (/api/sav)                                                         │
+│  ───────────────────────                                                        │
+│  GET    /api/sav/requests            Demandes pending+received (vue opérateur)  │
+│  GET    /api/sav/:serial/active      Fiche intervention technique active        │
+│  POST   /api/sav/:serial/save        Sauvegarder intervention (motif/pièces)   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## ANNEXE : Fichiers de référence
 
 ### Backend (back-end/src/)
@@ -1151,32 +1221,43 @@ Un processus automatique (CRON) déduit le stock des pièces lorsqu'une batterie
 - `models/SparePartMovement.model.js` - Journal mouvements
 - `models/BOM.model.js` - Nomenclatures
 - `models/Location.model.js` - Localisations
-- `models/SavIntervention.model.js` - Interventions SAV
+- `models/SavIntervention.model.js` - Interventions SAV (fiche technique interne)
+- `models/SavRequest.model.js` - Demandes SAV provider (portail)
 
 **Services:**
 - `services/sparePart.service.js` - CRUD catalogue
 - `services/stock.service.js` - Gestion stock et mouvements
 - `services/bom.service.js` - Gestion BOM
 - `services/production.service.js` - Déduction auto production
-- `services/sav.service.js` - Déduction SAV
+- `services/sav.service.js` - Déduction SAV + interventions
+
+**Contrôleurs:**
+- `controllers/savRequest.controller.js` - Demandes SAV provider
+- `controllers/sav.controller.js` - Interventions SAV internes
 
 **Routes:**
 - `routes/SpareParts.routes.js` - API catalogue
 - `routes/Stock.routes.js` - API stock/mouvements
 - `routes/bom.routes.js` - API BOM
+- `routes/SavRequest.routes.js` - API demandes SAV provider
+- `routes/Sav.routes.js` - API interventions SAV internes
 
-### Frontend (front-end/src/)
+### Frontend ERP (front-end/src/)
 
 **Services:**
 - `services/spareParts.js` - API client catalogue
 - `services/stock.js` - API client stock
 - `services/bom.js` - API client BOM
+- `services/sav.js` - API client interventions SAV
 
 **Vues Admin:**
 - `views/Admin/AdminBomView.vue` - Liste BOM
 - `views/Admin/AdminBomDetailsView.vue` - Détail/édition BOM
 
+**Vues SAV:**
+- `views/Batterie-views/ShowSavBatteriesView.vue` - Dashboard SAV (batteries + demandes)
+
 ---
 
 _Document généré le 30/01/2026_
-_Version 1.4 - Mise à jour routes API avec préfixe /api/_
+_Version 1.5 - Ajout Partie 8 : workflow SavRequest provider + mise à jour annexe_
