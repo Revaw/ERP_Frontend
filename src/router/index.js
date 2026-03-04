@@ -18,6 +18,7 @@ import AdminBomView from '@/views/Admin/AdminBomView.vue'
 import AdminBomDetailsView from '@/views/Admin/AdminBomDetailsView.vue'
 import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
+import DevicesView from '@/views/DevicesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -100,6 +101,11 @@ const router = createRouter({
       path: '/inventory/:location',
       name: 'inventory',
       component: InventoryView,
+    },
+    {
+      path: '/devices',
+      name: 'devices',
+      component: DevicesView,
     },
     {
       path: '/admin/users',

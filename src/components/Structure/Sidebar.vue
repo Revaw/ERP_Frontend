@@ -36,6 +36,12 @@
           </RouterLink>
         </li>
         <li>
+          <RouterLink to="/devices" class="sidebar__link" @click="closeMobile">
+            <FontAwesomeIcon class="sidebar__icon" :icon="['fas', 'microchip']" />
+            <span>Devices</span>
+          </RouterLink>
+        </li>
+        <li>
           <RouterLink to="/" class="sidebar__link" @click="closeMobile">
             <FontAwesomeIcon class="sidebar__icon" :icon="['fas', 'chart-pie']" />
             <span>Statistiques</span>
