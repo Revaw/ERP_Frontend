@@ -10,6 +10,10 @@
 
     <!-- Toolbar -->
     <div class="toolbar">
+      <label class="toggle-inactive">
+        <input type="checkbox" v-model="showInactive" @change="loadUsers" />
+        <span>Afficher les comptes désactivés</span>
+      </label>
       <button class="btn-primary" @click="openAddModal">
         <FontAwesomeIcon :icon="['fas', 'user-plus']" />
         Nouvel Utilisateur
@@ -23,6 +27,8 @@
           <tr>
             <th>Utilisateur</th>
             <th>Rôle</th>
+            <th>Tenant</th>
+            <th>Statut</th>
             <th>Créé le</th>
             <th>Actions</th>
           </tr>
@@ -41,19 +47,37 @@
                 {{ formatRole(user.role) }}
               </span>
             </td>
+            <td data-label="Tenant">
+              <span v-if="user.tenantId" class="tenant-badge">{{ user.tenantId }}</span>
+              <span v-else class="text-muted">—</span>
+            </td>
+            <td data-label="Statut">
+              <span :class="['status-badge', user.isActive === false ? 'status-badge--inactive' : 'status-badge--active']">
+                {{ user.isActive === false ? 'Désactivé' : 'Actif' }}
+              </span>
+            </td>
             <td data-label="Créé le">{{ formatDate(user.createdAt) }}</td>
             <td data-label="Actions" class="actions-cell">
-              <button class="btn-secondary btn--sm" @click="openEditModal(user)">
+              <button class="btn-secondary btn--sm" @click="openEditModal(user)" :disabled="user.isActive === false">
                 <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                 Modifier
               </button>
               <button
+                v-if="user.isActive !== false"
                 class="btn-icon btn-icon--danger"
-                @click="prepareDelete(user)"
+                @click="prepareDeactivate(user)"
                 :disabled="user.username === 'admin'"
-                title="Supprimer"
+                title="Désactiver"
               >
-                <FontAwesomeIcon :icon="['fas', 'trash']" />
+                <FontAwesomeIcon :icon="['fas', 'ban']" />
+              </button>
+              <button
+                v-else
+                class="btn-icon btn-icon--success"
+                @click="confirmReactivate(user)"
+                title="Réactiver"
+              >
+                <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
               </button>
             </td>
           </tr>
@@ -114,6 +138,16 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label for="tenantId">Tenant ID <small class="form-hint-inline">(ex: monabee — laisser vide pour les ERP users)</small></label>
+          <input
+            id="tenantId"
+            type="text"
+            v-model="form.tenantId"
+            placeholder="Ex: monabee"
+          />
+        </div>
+
         <div class="form-group" v-if="isEditing">
           <label class="checkbox-label">
             <input type="checkbox" v-model="form.isPasswordTemporary" />
@@ -130,25 +164,26 @@
         </button>
       </template>
     </Modal>
-    <!-- Modal suppression -->
+    <!-- Modal désactivation -->
     <Modal
       :isOpen="isConfirmModalOpen"
-      title="Confirmer la suppression"
+      title="Désactiver le compte"
       @close="isConfirmModalOpen = false"
     >
-      <p v-if="userToDelete">
-        Voulez-vous vraiment supprimer définitivement l'utilisateur
-        <strong>{{ userToDelete.username }}</strong> ?
+      <p v-if="userToDeactivate">
+        Voulez-vous désactiver le compte de
+        <strong>{{ userToDeactivate.username }}</strong> ?
       </p>
       <p class="text-muted mt-2">
-        Cette action est irréversible et supprimera tous les accès de ce compte.
+        Le compte sera conservé mais l'utilisateur ne pourra plus se connecter.
+        Vous pourrez le réactiver à tout moment.
       </p>
 
       <template #footer>
         <button class="btn-secondary" @click="isConfirmModalOpen = false">Annuler</button>
-        <button class="btn-danger" @click="confirmDelete">
-          <FontAwesomeIcon :icon="['fas', 'trash']" />
-          Supprimer l'utilisateur
+        <button class="btn-danger" @click="confirmDeactivate">
+          <FontAwesomeIcon :icon="['fas', 'ban']" />
+          Désactiver le compte
         </button>
       </template>
     </Modal>
@@ -160,7 +195,7 @@ import { ref, computed, onMounted } from 'vue'
 //store
 import { useToastStore } from '@/stores/toast'
 // --- SERVICES ---
-import { getAllUsers, createUser, updateUser, deleteUser } from '@/services/users.js'
+import { getAllUsers, createUser, updateUser, deactivateUser, reactivateUser } from '@/services/users.js'
 // --- UTILS ---
 import { formatDate } from '@/utils/formatDate.js'
 // --- COMPOSANTS UI ---
@@ -178,36 +213,41 @@ const form = ref({
   username: '',
   password: '',
   role: 'user',
+  tenantId: '',
   isPasswordTemporary: true, // Force le changement de mot de passe à la prochaine connexion
 })
 
-// --- État pour la confirmation de suppression ---
+// --- État pour la confirmation de désactivation ---
+const showInactive = ref(false)
 const isConfirmModalOpen = ref(false)
-const userToDelete = ref(null)
+const userToDeactivate = ref(null)
 
-/**
- * Prépare la suppression en ouvrant la modale
- */
-const prepareDelete = (user) => {
-  userToDelete.value = user
+const prepareDeactivate = (user) => {
+  userToDeactivate.value = user
   isConfirmModalOpen.value = true
 }
 
-/**
- * Action réelle de suppression appelée par la modale
- */
-const confirmDelete = async () => {
-  if (!userToDelete.value) return
-
+const confirmDeactivate = async () => {
+  if (!userToDeactivate.value) return
   try {
-    await deleteUser(userToDelete.value._id)
+    await deactivateUser(userToDeactivate.value._id)
     await loadUsers()
-    toast.success('Utilisateur supprimé')
+    toast.success('Compte désactivé')
   } catch {
-    toast.error('Erreur suppression')
+    toast.error('Erreur désactivation')
   } finally {
     isConfirmModalOpen.value = false
-    userToDelete.value = null
+    userToDeactivate.value = null
+  }
+}
+
+const confirmReactivate = async (user) => {
+  try {
+    await reactivateUser(user._id)
+    await loadUsers()
+    toast.success('Compte réactivé')
+  } catch {
+    toast.error('Erreur réactivation')
   }
 }
 
@@ -240,7 +280,7 @@ const getRoleIcon = (role) => {
 // --- ACTIONS UI ---
 const loadUsers = async () => {
   try {
-    users.value = await getAllUsers()
+    users.value = await getAllUsers({ includeInactive: showInactive.value })
   } catch {
     toast.error('Erreur chargement utilisateurs')
   }
@@ -248,7 +288,7 @@ const loadUsers = async () => {
 
 const openAddModal = () => {
   isEditing.value = false
-  form.value = { _id: null, username: '', password: '', role: 'user', isPasswordTemporary: true }
+  form.value = { _id: null, username: '', password: '', role: 'user', tenantId: '', isPasswordTemporary: true }
   isModalOpen.value = true
 }
 
@@ -260,6 +300,7 @@ const openEditModal = (user) => {
     username: user.username,
     password: '',
     role: user.role,
+    tenantId: user.tenantId || '',
     isPasswordTemporary: user.isPasswordTemporary,
   }
   isModalOpen.value = true
@@ -295,6 +336,7 @@ const saveForm = async () => {
     if (isEditing.value) {
       const payload = {
         role: form.value.role,
+        tenantId: form.value.tenantId || null,
         isPasswordTemporary: form.value.isPasswordTemporary,
       }
       // Si un MDP est saisi, on l'ajoute au payload
@@ -357,7 +399,8 @@ onMounted(loadUsers)
 // Toolbar
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: $spacing-5;
 }
 
@@ -459,6 +502,72 @@ onMounted(loadUsers)
 .btn--sm {
   padding: $spacing-2 $spacing-3;
   font-size: $font-size-sm;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &--active {
+    background-color: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  &--inactive {
+    background-color: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-light);
+  }
+}
+
+.btn-icon--success {
+  color: var(--color-success);
+
+  &:hover {
+    background-color: var(--color-success-bg);
+  }
+}
+
+.toggle-inactive {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--revaw-primary);
+  }
+}
+
+.tenant-badge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-2;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.text-muted {
+  color: var(--text-tertiary);
+}
+
+.form-hint-inline {
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+  font-weight: $font-weight-normal;
 }
 
 // Modal form

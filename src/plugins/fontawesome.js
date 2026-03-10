@@ -12,6 +12,7 @@ import {
   faChevronUp,
   faChevronLeft,
   faChevronRight,
+  faMicrochip,
   // Actions
   faPlus,
   faMinus,
@@ -62,6 +63,7 @@ import {
   faUserShield,
   faRightFromBracket,
   faTruckFast,
+  faRotateRight,
 
   // Theme
   faSun,
@@ -84,6 +86,7 @@ library.add(
   faChevronUp,
   faChevronLeft,
   faChevronRight,
+  faMicrochip,
 
   // Actions
   faPlus,
@@ -135,6 +138,7 @@ library.add(
   faUserShield,
   faRightFromBracket,
   faTruckFast,
+  faRotateRight,
 
   // Theme
   faSun,

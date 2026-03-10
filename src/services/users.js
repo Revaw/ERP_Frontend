@@ -11,9 +11,11 @@ const API_URL = `${API_BASE_URL}/auth`
  * Récupère la liste de tous les utilisateurs.
  * @returns {Promise<Array<Object>>} Tableau d'objets utilisateurs
  */
-export async function getAllUsers() {
+export async function getAllUsers({ includeInactive = false } = {}) {
   try {
-    const res = await axios.get(`${API_URL}/users`)
+    const res = await axios.get(`${API_URL}/users`, {
+      params: includeInactive ? { includeInactive: 'true' } : {},
+    })
     return res.data
   } catch (err) {
     console.error('Erreur API getAllUsers:', err)
@@ -47,13 +49,24 @@ export async function updateUser(id, data) {
   }
 }
 
-// Supprimer un utilisateur sauf l'admin principal
-export async function deleteUser(id) {
+// Désactive un utilisateur (isActive: false) — préserve l'historique
+export async function deactivateUser(id) {
   try {
     const res = await axios.delete(`${API_URL}/users/${id}`)
     return res.data
   } catch (err) {
-    console.error('Erreur API deleteUser:', err)
+    console.error('Erreur API deactivateUser:', err)
+    throw err
+  }
+}
+
+// Réactive un utilisateur désactivé
+export async function reactivateUser(id) {
+  try {
+    const res = await axios.put(`${API_URL}/users/${id}`, { isActive: true })
+    return res.data
+  } catch (err) {
+    console.error('Erreur API reactivateUser:', err)
     throw err
   }
 }

@@ -18,7 +18,7 @@
         <span class="stat-item__label">Enregistrés</span>
       </div>
       <div class="stat-item stat-item--warn" v-if="unregisteredCount > 0">
-        <FontAwesomeIcon :icon="['fas', 'triangle-exclamation']" />
+        <FontAwesomeIcon :icon="['fas', 'circle-exclamation']" />
         <span class="stat-item__value">{{ unregisteredCount }}</span>
         <span class="stat-item__label">Non configurés</span>
       </div>
@@ -75,22 +75,25 @@
               {{ formatDate(device.receivedAt) }}
             </td>
             <td data-label="Actions" class="actions-cell">
-              <button
-                v-if="device.registered"
-                class="btn-icon btn-icon--primary"
-                title="Modifier la configuration"
-                @click="openEdit(device)"
-              >
-                <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
-              </button>
-              <button
-                v-else
-                class="btn-icon btn-icon--warn"
-                title="Configurer ce device"
-                @click="openRegister(device)"
-              >
-                <FontAwesomeIcon :icon="['fas', 'gear']" />
-              </button>
+              <template v-if="authStore.isAdmin">
+                <button
+                  v-if="device.registered"
+                  class="btn-icon btn-icon--primary"
+                  title="Modifier la configuration"
+                  @click="openEdit(device)"
+                >
+                  <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+                </button>
+                <button
+                  v-else
+                  class="btn-icon btn-icon--warn"
+                  title="Configurer ce device"
+                  @click="openRegister(device)"
+                >
+                  <FontAwesomeIcon :icon="['fas', 'gear']" />
+                </button>
+              </template>
+              <span v-else class="text-muted">—</span>
             </td>
           </tr>
           <tr v-if="devices.length === 0">
@@ -148,11 +151,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 import { getAllDevices, registerDevice, updateDevice } from '@/services/devices.js'
 import Modal from '@/components/ui/Modal.vue'
 import Loader from '@/components/ui/Loader.vue'
 
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 const devices = ref([])
 const loading = ref(false)

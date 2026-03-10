@@ -38,6 +38,13 @@
         </div>
         <span class="quick-nav__label">Pièces Détachées</span>
       </RouterLink>
+      <!-- Devices -->
+      <RouterLink to="/devices" class="quick-nav__item">
+        <div class="quick-nav__icon quick-nav__icon--green">
+          <FontAwesomeIcon :icon="['fas', 'microchip']" />
+        </div>
+        <span class="quick-nav__label">Devices</span>
+      </RouterLink>
       <!-- Statistiques -->
       <RouterLink to="/" class="quick-nav__item">
         <div class="quick-nav__icon quick-nav__icon--purple">
@@ -190,7 +197,7 @@ onMounted(async () => {
 
 .quick-nav {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: $spacing-4;
 
   @media (max-width: $breakpoint-xl) {
@@ -259,6 +266,11 @@ onMounted(async () => {
     &--orange {
       background-color: var(--color-warning-bg);
       color: var(--color-warning);
+    }
+
+    &--green {
+      background-color: var(--color-success-bg);
+      color: var(--color-success);
     }
   }
 
