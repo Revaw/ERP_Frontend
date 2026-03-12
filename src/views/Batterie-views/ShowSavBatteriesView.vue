@@ -7,6 +7,10 @@
         Batteries en SAV
       </h1>
       <p class="page__subtitle">Suivi des batteries en service après-vente</p>
+      <RouterLink to="/sav/history" class="btn-history">
+        <FontAwesomeIcon :icon="['fas', 'clock-rotate-left']" />
+        Historique
+      </RouterLink>
     </div>
 
     <!-- Loader -->
@@ -38,11 +42,21 @@
 
       <!-- Section Demandes SAV (requêtes prestataires) -->
       <section v-if="savRequests.length > 0" class="sav-section">
-        <h2 class="sav-section__title">
-          <FontAwesomeIcon :icon="['fas', 'inbox']" />
-          Demandes SAV
-        </h2>
-        <p class="sav-section__subtitle">Requêtes envoyées par les prestataires</p>
+        <div class="sav-section__header">
+          <div>
+            <h2 class="sav-section__title">
+              <FontAwesomeIcon :icon="['fas', 'inbox']" />
+              Demandes SAV
+            </h2>
+            <p class="sav-section__subtitle">Requêtes envoyées par les prestataires</p>
+          </div>
+          <ExportExcelButton
+            :fetchFn="fetchRequestsForExport"
+            filename="demandes_sav"
+            label="Exporter"
+            :columns="exportRequestsColumns"
+          />
+        </div>
 
         <ul class="battery-grid">
           <BatteryCard
@@ -70,11 +84,22 @@
 
       <!-- Section Batteries en SAV (en cours de traitement) -->
       <section class="sav-section">
-        <h2 class="sav-section__title">
-          <FontAwesomeIcon :icon="['fas', 'heart-pulse']" />
-          Batteries en SAV
-        </h2>
-        <p class="sav-section__subtitle">Batteries actuellement en cours de traitement</p>
+        <div class="sav-section__header">
+          <div>
+            <h2 class="sav-section__title">
+              <FontAwesomeIcon :icon="['fas', 'heart-pulse']" />
+              Batteries en SAV
+            </h2>
+            <p class="sav-section__subtitle">Batteries actuellement en cours de traitement</p>
+          </div>
+          <ExportExcelButton
+            v-if="batteries.length > 0"
+            :fetchFn="fetchBatteriesForExport"
+            filename="batteries_sav"
+            label="Exporter"
+            :columns="exportBatteriesColumns"
+          />
+        </div>
 
         <ul class="battery-grid">
           <BatteryCard v-for="b in batteries" :key="b._id" :battery="b">
@@ -106,6 +131,7 @@ import BatteryCard from '@/components/batteries/BatteryCard.vue'
 import CustomTag from '@/components/ui/CustomTag.vue'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Loader from '@/components/ui/Loader.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 const batteries = ref([])
 const savRequests = ref([])
@@ -132,6 +158,30 @@ const fetchSavData = async () => {
   }
 }
 
+function fetchRequestsForExport() {
+  return Promise.resolve(
+    savRequests.value.map((r) => ({ ...r, requestedBy: r.requestedBy?.username || 'Inconnu' })),
+  )
+}
+
+function fetchBatteriesForExport() {
+  return Promise.resolve(batteries.value)
+}
+
+const exportRequestsColumns = [
+  { key: 'batterySerial', label: 'N° Série' },
+  { key: 'requestedBy', label: 'Prestataire' },
+  { key: 'requestedAt', label: 'Date demande' },
+  { key: 'reason', label: 'Motif' },
+]
+
+const exportBatteriesColumns = [
+  { key: 'NumeroSerie', label: 'N° Série' },
+  { key: 'version', label: 'Version firmware' },
+  { key: 'TimestampImpression', label: 'Date création' },
+  { key: 'TimestampExpedition', label: 'Date expédition' },
+]
+
 onMounted(async () => {
   fetchSavData()
 })
@@ -145,6 +195,27 @@ onMounted(async () => {
 
   svg {
     color: var(--color-error);
+  }
+}
+
+.btn-history {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  border: 1px solid var(--border-default);
+  border-radius: $radius-md;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  transition: all $transition-fast;
+  align-self: flex-start;
+
+  &:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
 }
 
@@ -227,6 +298,13 @@ onMounted(async () => {
 .sav-section {
   margin-bottom: $spacing-8;
 
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-4;
+  }
+
   &__title {
     display: flex;
     align-items: center;
@@ -240,7 +318,7 @@ onMounted(async () => {
   &__subtitle {
     font-size: $font-size-sm;
     color: var(--text-secondary);
-    margin: 0 0 $spacing-4 0;
+    margin: 0;
   }
 }
 

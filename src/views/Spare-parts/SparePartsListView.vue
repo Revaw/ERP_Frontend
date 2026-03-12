@@ -16,15 +16,24 @@
     </div>
 
     <!-- Boutons haut -->
-    <div v-if="authStore.isAdmin" class="actions-header">
-      <button class="btn-secondary" @click="openArchiveModal">
-        <FontAwesomeIcon :icon="['fas', 'box-archive']" />
-        Archives
-      </button>
-      <button class="btn-primary" @click="openAddModal">
-        <FontAwesomeIcon :icon="['fas', 'plus']" />
-        Ajouter une pièce
-      </button>
+    <div class="actions-header">
+      <ExportExcelButton
+        v-if="spareParts.length > 0"
+        :fetchFn="fetchForExport"
+        filename="catalogue_pieces"
+        label="Exporter"
+        :columns="exportColumns"
+      />
+      <template v-if="authStore.isAdmin">
+        <button class="btn-secondary" @click="openArchiveModal">
+          <FontAwesomeIcon :icon="['fas', 'box-archive']" />
+          Archives
+        </button>
+        <button class="btn-primary" @click="openAddModal">
+          <FontAwesomeIcon :icon="['fas', 'plus']" />
+          Ajouter une pièce
+        </button>
+      </template>
     </div>
 
     <!-- Tableau des pièces -->
@@ -223,6 +232,7 @@ import { getAllSparePartWithStock } from '@/services/stock'
 // Composants UI
 import Modal from '@/components/ui/Modal.vue'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 const authStore = useAuthStore()
 const toast = useToastStore()
@@ -397,6 +407,20 @@ const openArchiveModal = async () => {
 const closeArchiveModal = () => {
   isArchiveModalOpen.value = false
 }
+
+function fetchForExport() {
+  return Promise.resolve(spareParts.value)
+}
+
+const exportColumns = [
+  { key: 'sku', label: 'SKU' },
+  { key: 'name', label: 'Nom' },
+  { key: 'supplier', label: 'Fournisseur' },
+  { key: 'supplier_url', label: 'Lien fournisseur' },
+  { key: 'unit', label: 'Unité' },
+  { key: 'delivery_delay', label: 'Délai (j)' },
+  { key: 'last_unit_price', label: 'Dernier prix (€)' },
+]
 
 onMounted(loadParts)
 </script>

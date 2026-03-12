@@ -37,6 +37,7 @@ export async function getBatteriesPaginated(page = 1, limit = 100, filters = {})
     })
 
     // Ajouter les filtres s'ils sont définis
+    if (filters.all) params.append('all', true)
     if (filters.prod !== undefined) params.append('prod', filters.prod)
     if (filters.exp !== undefined) params.append('exp', filters.exp)
     if (filters.sav !== undefined) params.append('sav', filters.sav)
@@ -73,6 +74,17 @@ export async function getSavBatteries() {
     return res.data
   } catch (err) {
     console.error('Erreur API getSavBatteries:', err)
+    throw err
+  }
+}
+
+// Recupere les stats mensuelles (stock + expéditions par mois)
+export async function getMonthlyStats() {
+  try {
+    const res = await axios.get(`${API_URL}/stats/monthly`)
+    return res.data
+  } catch (err) {
+    console.error('Erreur API getMonthlyStats:', err)
     throw err
   }
 }

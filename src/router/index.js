@@ -18,7 +18,10 @@ import AdminBomView from '@/views/Admin/AdminBomView.vue'
 import AdminBomDetailsView from '@/views/Admin/AdminBomDetailsView.vue'
 import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
+import VersionsView from '@/views/Admin/VersionsView.vue'
 import DevicesView from '@/views/DevicesView.vue'
+import StatsView from '@/views/StatsView.vue'
+import SavHistoryView from '@/views/Batterie-views/SavHistoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -112,6 +115,21 @@ const router = createRouter({
       name: 'admin-users',
       component: AdminUsersView,
       meta: { roles: ['superadmin'] },
+    },
+    {
+      path: '/admin/versions',
+      name: 'admin-versions',
+      component: VersionsView,
+    },
+    {
+      path: '/stats',
+      name: 'stats',
+      component: StatsView,
+    },
+    {
+      path: '/sav/history',
+      name: 'sav-history',
+      component: SavHistoryView,
     },
   ],
 })

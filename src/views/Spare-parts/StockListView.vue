@@ -28,9 +28,16 @@
       </div>
 
       <!-- Bouton haut -->
-      <div v-if="authStore.isAdmin" class="actions-header">
+      <div class="actions-header">
+        <ExportExcelButton
+          v-if="stocks.length > 0"
+          :fetchFn="fetchForExport"
+          :filename="`stock_${locationCode}`"
+          label="Exporter"
+          :columns="exportColumns"
+        />
         <RouterLink
-          v-if="locationCode"
+          v-if="authStore.isAdmin && locationCode"
           :to="{ name: 'inventory', params: { location: locationCode } }"
           class="btn-primary"
         >
@@ -107,6 +114,7 @@ import { formatDate } from '@/utils/formatDate.js'
 // Composants UI
 import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Loader from '@/components/ui/Loader.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 const authStore = useAuthStore() // Initialisation du store
 const toast = useToastStore()
@@ -152,6 +160,19 @@ const loadStockData = async () => {
     loading.value = false
   }
 }
+
+function fetchForExport() {
+  return Promise.resolve(stocks.value)
+}
+
+const exportColumns = [
+  { key: 'name', label: 'Pièce' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'quantity', label: 'Quantité' },
+  { key: 'unit', label: 'Unité' },
+  { key: 'criticalStock', label: 'Limite critique' },
+  { key: 'updatedAt', label: 'Dernière MAJ' },
+]
 
 onMounted(() => {
   loadStockData()

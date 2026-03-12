@@ -73,6 +73,7 @@ import {
   faFile,
   faFileExport,
   faFilePdf,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -148,6 +149,7 @@ library.add(
   faFile,
   faFileExport,
   faFilePdf,
+  faTag,
 )
 
 export { FontAwesomeIcon }

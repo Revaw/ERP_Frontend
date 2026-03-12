@@ -5,6 +5,16 @@
       <p class="page__subtitle">Devices connectés au broker MQTT</p>
     </div>
 
+    <!-- Actions -->
+    <div v-if="devices.length > 0" class="actions-bar">
+      <ExportExcelButton
+        :fetchFn="fetchForExport"
+        filename="devices"
+        label="Exporter"
+        :columns="exportColumns"
+      />
+    </div>
+
     <!-- Stats -->
     <div class="stats-bar">
       <div class="stat-item">
@@ -155,6 +165,7 @@ import { useAuthStore } from '@/stores/auth.js'
 import { getAllDevices, registerDevice, updateDevice } from '@/services/devices.js'
 import Modal from '@/components/ui/Modal.vue'
 import Loader from '@/components/ui/Loader.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 const toast = useToastStore()
 const authStore = useAuthStore()
@@ -242,10 +253,40 @@ function formatDate(iso) {
   })
 }
 
+function fetchForExport() {
+  return Promise.resolve(
+    devices.value.map((d) => ({
+      mac: d.deviceId,
+      statut: d.registered ? 'Configuré' : 'Non configuré',
+      label: d.registry?.label || '',
+      type: d.registry?.type || '',
+      tenant: d.registry?.tenantId || '',
+      notes: d.registry?.notes || '',
+      derniere_activite: d.receivedAt || '',
+    })),
+  )
+}
+
+const exportColumns = [
+  { key: 'mac', label: 'MAC' },
+  { key: 'statut', label: 'Statut' },
+  { key: 'label', label: 'Label' },
+  { key: 'type', label: 'Type' },
+  { key: 'tenant', label: 'Client' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'derniere_activite', label: 'Dernière activité' },
+]
+
 onMounted(load)
 </script>
 
 <style lang="scss" scoped>
+.actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-4;
+}
+
 .stats-bar {
   display: flex;
   flex-wrap: wrap;

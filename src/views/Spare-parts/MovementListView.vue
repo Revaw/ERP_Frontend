@@ -13,7 +13,19 @@
           <FontAwesomeIcon :icon="['fas', 'filter']" />
           Filtres
         </h3>
-        <span class="filters-card__count">{{ rangeText }}</span>
+        <div class="filters-card__header-right">
+          <button class="btn-reset" @click="resetFilters" title="Réinitialiser les filtres">
+            <FontAwesomeIcon :icon="['fas', 'rotate-left']" />
+            Réinitialiser
+          </button>
+          <ExportExcelButton
+            :fetchFn="fetchForExport"
+            filename="mouvements_pieces"
+            label="Exporter"
+            :columns="exportColumns"
+          />
+          <span class="filters-card__count">{{ rangeText }}</span>
+        </div>
       </div>
 
       <div class="filters-card__body">
@@ -43,8 +55,8 @@
           <span class="filters-group__label">Recherche</span>
           <div class="filters-group__items">
             <div class="form-group form-group--inline">
-              <label>SKU</label>
-              <input type="text" v-model="filters.sku" placeholder="ex: VIS-001" />
+              <label>Nom</label>
+              <input type="text" v-model="filters.name" placeholder="ex: Vis M4" />
             </div>
 
             <div class="form-group form-group--inline">
@@ -175,6 +187,7 @@ import ButtonBack from '@/components/ui/ButtonBack.vue'
 import CustomTag from '@/components/ui/CustomTag.vue'
 import Loader from '@/components/ui/Loader.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 // --- ÉTAT RÉACTIF (REFS) ---
 const movements = ref([]) // Liste des mouvements affichés (après filtrage)
@@ -188,7 +201,7 @@ const filters = ref({
   in: true, // checkbox: Entrees
   out: true, // checkbox: Sorties
   transfer: true, // checkbox: Transferts
-  sku: '', // Recherche par SKU
+  name: '', // Recherche par nom
   source: 'all', // Select: Origine (Manuel, Inventaire, SAV)
   dateStart: '', // Date de debut
   dateEnd: '', // Date de fin
@@ -221,7 +234,7 @@ async function loadPage(page) {
     const res = await getMovementsPaginated({
       page: page + 1,
       limit: 100,
-      sku: filters.value.sku || undefined,
+      name: filters.value.name || undefined,
       in: filters.value.in,
       out: filters.value.out,
       transfer: filters.value.transfer,
@@ -249,6 +262,41 @@ async function loadPage(page) {
 const rangeText = computed(
   () => `${currentPage.value * 50 + 1} – ${currentPage.value * 50 + movements.value.length}`,
 )
+
+async function fetchForExport() {
+  const res = await getMovementsPaginated({
+    ...filters.value,
+    all: true,
+    limit: 100,
+  })
+  return res.data
+}
+
+const exportColumns = [
+  { key: 'createdAt', label: 'Date' },
+  { key: 'name', label: 'Pièce' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'qty', label: 'Quantité' },
+  { key: 'reason', label: 'Motif' },
+  { key: 'location', label: 'Localisation' },
+  { key: 'from_location', label: 'De' },
+  { key: 'to_location', label: 'Vers' },
+  { key: 'battery_serial', label: 'N° Batterie' },
+  { key: 'unit_price', label: 'Prix unitaire' },
+  { key: 'comment', label: 'Note' },
+]
+
+function resetFilters() {
+  filters.value = {
+    in: true,
+    out: true,
+    transfer: true,
+    name: '',
+    source: 'all',
+    dateStart: '',
+    dateEnd: '',
+  }
+}
 
 onMounted(() => loadPage(0))
 </script>
@@ -282,6 +330,12 @@ onMounted(() => loadPage(0))
     }
   }
 
+  &__header-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+  }
+
   &__count {
     font-size: $font-size-sm;
     color: var(--text-secondary);
@@ -300,6 +354,25 @@ onMounted(() => loadPage(0))
       flex-direction: column;
       gap: $spacing-4;
     }
+  }
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid var(--border-default);
+  border-radius: $radius-md;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
 }
 

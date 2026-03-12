@@ -45,11 +45,12 @@ export async function getMovementsPaginated(params = {}) {
       params: {
         page: params.page || 1,
         limit: params.limit || 50,
-        sku: params.sku || undefined,
+        name: params.name || undefined,
         types: types.length > 0 ? types.join(',') : undefined,
         source: params.source || undefined,
         dateStart: params.dateStart || undefined,
         dateEnd: params.dateEnd || undefined,
+        all: params.all || undefined,
       },
     })
     return res.data

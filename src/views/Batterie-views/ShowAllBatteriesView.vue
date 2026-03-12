@@ -9,7 +9,18 @@
     <div class="filters-card">
       <div class="filters-card__header">
         <h3>Filtres</h3>
-        <span class="filters-card__count">{{ rangeText }}</span>
+        <div class="filters-card__header-right">
+          <button class="btn-reset" @click="resetFilters" title="Réinitialiser les filtres">
+            <FontAwesomeIcon :icon="['fas', 'rotate-left']" />
+            Réinitialiser
+          </button>
+          <ExportExcelButton
+            :fetchFn="fetchForExport"
+            filename="batteries"
+            :columns="exportColumns"
+          />
+          <span class="filters-card__count">{{ rangeText }}</span>
+        </div>
       </div>
 
       <div class="filters-card__body">
@@ -40,7 +51,7 @@
         </div>
 
         <div class="filters-group">
-          <span class="filters-group__label">Période d'éxpeditions</span>
+          <span class="filters-group__label">Période d'expéditions</span>
           <div class="filters-group__items">
             <div class="form-group form-group--inline">
               <label>Du</label>
@@ -68,11 +79,7 @@
         <div class="filters-group">
           <span class="filters-group__label">N° Série</span>
           <div class="form-group form-group--inline">
-            <input
-              type="text"
-              v-model="filters.serial"
-              placeholder="ex: 458"
-            />
+            <input type="text" v-model="filters.serial" placeholder="ex: 458" />
           </div>
         </div>
       </div>
@@ -126,6 +133,7 @@ import CustomTag from '@/components/ui/CustomTag.vue'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import Loader from '@/components/ui/Loader.vue'
+import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 // Services & Utils
 import { getBatteriesPaginated } from '@/services/batteries.js'
 import { getStatusText, getStatusVariant, getBatteryKwh } from '@/utils/batteryHelpers.js'
@@ -194,6 +202,36 @@ const rangeText = computed(() => {
   return `${count} batterie${s} trouvée${s}`
 })
 
+function resetFilters() {
+  filters.value = {
+    prod: true,
+    exp: true,
+    sav: true,
+    wait: true,
+    isCanceled: false,
+    startDate: null,
+    endDate: null,
+    kwh: '',
+    serial: '',
+  }
+}
+
+// --- EXPORT EXCEL ---
+const exportColumns = [
+  { key: 'NumeroSerie', label: 'N° Série' },
+  { key: 'version', label: 'Version firmware' },
+  { key: 'TimestampImpression', label: 'Date création' },
+  { key: 'TimestampTestDone', label: 'Date mise en stock' },
+  { key: 'TimestampExpedition', label: 'Date expédition' },
+  { key: 'sav_status', label: 'SAV' },
+  { key: 'isCanceled', label: 'Annulée' },
+]
+
+async function fetchForExport() {
+  const res = await getBatteriesPaginated(1, 100, { ...filters.value, all: true })
+  return res.data
+}
+
 onMounted(async () => {
   await loadPage(1)
 })
@@ -219,6 +257,12 @@ onMounted(async () => {
     }
   }
 
+  &__header-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+  }
+
   &__count {
     font-size: $font-size-sm;
     color: var(--text-secondary);
@@ -237,6 +281,25 @@ onMounted(async () => {
       flex-direction: column;
       gap: $spacing-4;
     }
+  }
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid var(--border-default);
+  border-radius: $radius-md;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
 }
 

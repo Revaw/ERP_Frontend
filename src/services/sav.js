@@ -29,6 +29,26 @@ export async function getActiveIntervention(serial) {
   }
 }
 
+// Historique paginé des interventions SAV
+export async function getSavHistory(page = 1, limit = 20, filters = {}) {
+  try {
+    const params = new URLSearchParams()
+    params.append('page', page)
+    params.append('limit', limit)
+    if (filters.serial) params.append('serial', filters.serial)
+    if (filters.status) params.append('status', filters.status)
+    if (filters.startDate) params.append('startDate', filters.startDate)
+    if (filters.endDate) params.append('endDate', filters.endDate)
+    if (filters.all) params.append('all', 'true')
+
+    const res = await axios.get(`${API_URL}/history?${params.toString()}`)
+    return res.data
+  } catch (err) {
+    console.error('Erreur API getSavHistory:', err)
+    throw err
+  }
+}
+
 // Sauvegarder l'intervention
 export async function saveIntervention(serial, payload) {
   try {

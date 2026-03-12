@@ -45,8 +45,15 @@
         </div>
         <span class="quick-nav__label">Devices</span>
       </RouterLink>
+      <!-- Versions -->
+      <RouterLink to="/admin/versions" class="quick-nav__item">
+        <div class="quick-nav__icon quick-nav__icon--blue">
+          <FontAwesomeIcon :icon="['fas', 'tag']" />
+        </div>
+        <span class="quick-nav__label">Versions</span>
+      </RouterLink>
       <!-- Statistiques -->
-      <RouterLink to="/" class="quick-nav__item">
+      <RouterLink to="/stats" class="quick-nav__item">
         <div class="quick-nav__icon quick-nav__icon--purple">
           <FontAwesomeIcon :icon="['fas', 'chart-pie']" />
         </div>
@@ -197,7 +204,7 @@ onMounted(async () => {
 
 .quick-nav {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: $spacing-4;
 
   @media (max-width: $breakpoint-xl) {

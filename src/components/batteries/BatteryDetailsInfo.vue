@@ -102,13 +102,12 @@
         <form @submit.prevent="handleUpdateVersion">
           <div class="form-group mb-3">
             <label class="form-label">Nouvelle Version</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="form.newVersion"
-              placeholder="Ex: V2.1"
-              required
-            />
+            <select class="form-control" v-model="form.newVersion" required>
+              <option value="" disabled>Sélectionner une version…</option>
+              <option v-for="v in versionOptions" :key="v._id" :value="v.version">
+                {{ v.version }}{{ v.description ? ` — ${v.description}` : '' }}
+              </option>
+            </select>
           </div>
 
           <div class="form-group mb-4">
@@ -262,6 +261,7 @@ import {
 import { saveIntervention, getActiveIntervention } from '@/services/sav'
 import { getAllSpareParts } from '@/services/spareParts'
 import { getActiveBOMByType } from '@/services/bom'
+import { getAllVersions } from '@/services/versions'
 // Composants UI
 import CustomTag from '../ui/CustomTag.vue'
 import CustomBloc from '../ui/CustomBloc.vue'
@@ -301,6 +301,7 @@ const isEditingSav = ref(false)
 // --- Logique du Modal d'édition ---
 const isVersionModalOpen = ref(false)
 const isSubmitting = ref(false)
+const versionOptions = ref([])
 
 const form = reactive({
   newVersion: '',
@@ -509,10 +510,20 @@ const sourceType = computed(() => {
   return types[battery.value?.type] || 'Inconnu'
 })
 
-const openVersionModal = () => {
-  form.newVersion = props.battery.version || '' // Pré-remplir avec la version actuelle
+const openVersionModal = async () => {
+  form.newVersion = props.battery.version || ''
   form.reason = ''
   isVersionModalOpen.value = true
+  try {
+    const all = await getAllVersions()
+    versionOptions.value = all.filter((v) => v.isActive !== false)
+    // Si la version actuelle n'est pas dans la liste, la pré-sélectionner quand même
+    if (form.newVersion && !versionOptions.value.find((v) => v.version === form.newVersion)) {
+      form.newVersion = versionOptions.value[0]?.version || ''
+    }
+  } catch {
+    toast.error('Impossible de charger la liste des versions')
+  }
 }
 
 const closeVersionModal = () => {
