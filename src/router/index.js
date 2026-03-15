@@ -20,6 +20,7 @@ import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
 import VersionsView from '@/views/Admin/VersionsView.vue'
 import DevicesView from '@/views/DevicesView.vue'
+import PendingDevicesView from '@/views/PendingDevicesView.vue'
 import StatsView from '@/views/StatsView.vue'
 import SavHistoryView from '@/views/Batterie-views/SavHistoryView.vue'
 
@@ -109,6 +110,11 @@ const router = createRouter({
       path: '/devices',
       name: 'devices',
       component: DevicesView,
+    },
+    {
+      path: '/devices/pending',
+      name: 'devices-pending',
+      component: PendingDevicesView,
     },
     {
       path: '/admin/users',

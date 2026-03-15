@@ -14,6 +14,10 @@
             <FontAwesomeIcon :icon="['fas', 'rotate-left']" />
             Réinitialiser
           </button>
+          <button class="btn-secondary" @click="openMonabeePortal">
+            <FontAwesomeIcon :icon="['fas', 'globe']" />
+            Portail Monabee
+          </button>
           <ExportExcelButton
             :fetchFn="fetchForExport"
             filename="batteries"
@@ -127,6 +131,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { isTauri } from '@/utils/tauri'
 // Composants UI
 import BatteryCard from '@/components/batteries/BatteryCard.vue'
 import CustomTag from '@/components/ui/CustomTag.vue'
@@ -235,6 +240,16 @@ async function fetchForExport() {
 onMounted(async () => {
   await loadPage(1)
 })
+
+const openMonabeePortal = async () => {
+  const url = 'https://batteries-portal.onrender.com/'
+  if (isTauri()) {
+    const { open } = await import('@tauri-apps/plugin-shell')
+    open(url)
+  } else {
+    window.open(url, '_blank')
+  }
+}
 </script>
 
 <style lang="scss" scoped>

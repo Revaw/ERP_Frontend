@@ -6,8 +6,17 @@
     </div>
 
     <!-- Actions -->
-    <div v-if="devices.length > 0" class="actions-bar">
+    <div class="actions-bar">
+      <button class="btn-secondary" @click="$router.push('/devices/pending')">
+        <FontAwesomeIcon :icon="['fas', 'clock']" />
+        Devices en attente
+      </button>
+      <button class="btn-secondary" @click="openMultibat">
+        <FontAwesomeIcon :icon="['fas', 'chart-line']" />
+        Interface graphique
+      </button>
       <ExportExcelButton
+        v-if="devices.length > 0"
         :fetchFn="fetchForExport"
         filename="devices"
         label="Exporter"
@@ -162,6 +171,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToastStore } from '@/stores/toast.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { isTauri } from '@/utils/tauri'
 import { getAllDevices, registerDevice, updateDevice } from '@/services/devices.js'
 import Modal from '@/components/ui/Modal.vue'
 import Loader from '@/components/ui/Loader.vue'
@@ -278,6 +288,16 @@ const exportColumns = [
 ]
 
 onMounted(load)
+
+const openMultibat = async () => {
+  const url = 'https://multibat-interface.onrender.com/#/'
+  if (isTauri()) {
+    const { open } = await import('@tauri-apps/plugin-shell')
+    open(url)
+  } else {
+    window.open(url, '_blank')
+  }
+}
 </script>
 
 <style lang="scss" scoped>
