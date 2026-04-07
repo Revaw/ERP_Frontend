@@ -122,6 +122,7 @@
                 <th>Qté</th>
                 <th>Motif</th>
                 <th>Détails</th>
+                <th>Par</th>
                 <th>Note</th>
               </tr>
             </thead>
@@ -155,6 +156,8 @@
                     {{ m.battery_serial }}
                   </div>
                 </td>
+                <!-- origine -->
+                <td data-label="Par" class="created-by-cell">{{ m.createdBy || '-' }}</td>
                 <!-- commentaire -->
                 <td data-label="Commentaire" class="comment-cell">{{ m.comment || '-' }}</td>
               </tr>
@@ -283,6 +286,7 @@ const exportColumns = [
   { key: 'to_location', label: 'Vers' },
   { key: 'battery_serial', label: 'N° Batterie' },
   { key: 'unit_price', label: 'Prix unitaire' },
+  { key: 'createdBy', label: 'Par' },
   { key: 'comment', label: 'Note' },
 ]
 
@@ -532,6 +536,13 @@ onMounted(() => loadPage(0))
   & + & {
     margin-top: $spacing-1;
   }
+}
+
+.created-by-cell {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
 }
 
 .comment-cell {

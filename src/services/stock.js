@@ -71,6 +71,16 @@ export async function getRecentMovements() {
   }
 }
 
+export async function updateCriticalStock(sku, location, criticalStock) {
+  try {
+    const res = await axios.patch(`${API_URL}/critical`, { sku, location, criticalStock })
+    return res.data
+  } catch (err) {
+    console.error('Erreur API updateCriticalStock:', err)
+    throw err
+  }
+}
+
 export async function getAllSparePartWithStock() {
   try {
     const res = await axios.get(`${API_URL}/catalog`)

@@ -57,9 +57,19 @@
       <!-- Pièce -->
       <div class="form-group">
         <label>Pièce</label>
-        <select v-model="form.sku" required>
+        <div class="select-search">
+          <FontAwesomeIcon :icon="['fas', 'magnifying-glass']" class="select-search__icon" />
+          <input
+            v-model="skuSearch"
+            type="text"
+            class="select-search__input"
+            placeholder="Rechercher une pièce…"
+            spellcheck="false"
+          />
+        </div>
+        <select v-model="form.sku" required :size="skuSearch ? Math.min(filteredSpareParts.length + 1, 6) : 1" @change="skuSearch = ''">
           <option value="">-- Choisir une pièce --</option>
-          <option v-for="part in spareParts" :key="part.sku" :value="part.sku">
+          <option v-for="part in filteredSpareParts" :key="part.sku" :value="part.sku">
             {{ part.name }} ({{ part.sku }})
           </option>
         </select>
@@ -210,9 +220,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 //store
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth.js'
 // Services API
 import { getAllSpareParts } from '@/services/spareParts.js'
 import { createMovement, getRecentMovements } from '@/services/stock.js'
@@ -223,9 +234,18 @@ import { formatDate } from '@/utils/formatDate.js'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
 
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 // --- ÉTAT RÉACTIF (DATA) ---
 const spareParts = ref([]) // Liste complète des pièces (pour le select SKU)
+const skuSearch = ref('')
+const filteredSpareParts = computed(() => {
+  const q = skuSearch.value.trim().toLowerCase()
+  if (!q) return spareParts.value
+  return spareParts.value.filter(p =>
+    p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
+  )
+})
 const locations = ref([]) // Liste des lieux de stockage (pour les select Location)
 const recentMovements = ref([]) // Historique immédiat pour feedback utilisateur
 const mode = ref(null) // Mode actif du formulaire : 'in', 'out' ou 'transfer'
@@ -248,6 +268,7 @@ const form = ref({
  */
 const setMode = (value) => {
   mode.value = value
+  skuSearch.value = ''
   // Reset complet des champs pour éviter les effets de bord
   form.value = {
     sku: '',
@@ -289,7 +310,7 @@ const handleSubmit = async () => {
       ...form.value,
       qty: signedQty,
       unit_price: computedUnitPrice, // Envoi du calculé (peut être null)
-      createdBy: 'operator', // TODO: Remplacer par l'ID user réel de l'utilisateur connecté
+      createdBy: authStore.username,
     })
     // 5. Feedback et Nettoyage
     toast.success('Mouvement enregistré avec succès !')
@@ -418,6 +439,36 @@ onMounted(async () => {
 
     .mode-btn__icon {
       background-color: var(--color-info);
+    }
+  }
+}
+
+.select-search {
+  position: relative;
+  margin-bottom: $spacing-2;
+
+  &__icon {
+    position: absolute;
+    left: $spacing-3;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: $font-size-sm;
+    pointer-events: none;
+  }
+
+  &__input {
+    width: 100%;
+    padding: $spacing-2 $spacing-3 $spacing-2 $spacing-8;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    outline: none;
+    transition: border-color $transition-fast;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--revaw-primary);
     }
   }
 }

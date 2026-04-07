@@ -74,6 +74,7 @@
               <th>Quantité</th>
               <th>Limite critique</th>
               <th>Dernière mise à jour</th>
+              <th v-if="authStore.isAdmin"></th>
             </tr>
           </thead>
           <tbody>
@@ -105,6 +106,16 @@
               </td>
               <!-- dernière MAJ -->
               <td data-label="Dernière MAJ">{{ formatDate(stock.updatedAt) }}</td>
+              <!-- action -->
+              <td v-if="authStore.isAdmin" class="actions-cell">
+                <button
+                  class="btn-icon btn-icon--primary"
+                  title="Modifier la limite critique"
+                  @click.stop="openCriticalModal(stock)"
+                >
+                  <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -121,6 +132,29 @@
           Faire un inventaire
         </RouterLink>
       </div>
+    <!-- Modal limite critique -->
+    <Modal :isOpen="isCriticalModalOpen" title="Modifier la limite critique" @close="isCriticalModalOpen = false">
+      <p class="modal-desc">
+        <strong>{{ criticalTarget?.name }}</strong> — {{ locationName }}
+      </p>
+      <div class="form-group">
+        <label>Limite critique</label>
+        <input
+          type="number"
+          min="0"
+          v-model.number="criticalForm.value"
+          placeholder="Ex: 10"
+        />
+        <span class="field-hint">Laisser vide pour désactiver l'alerte</span>
+      </div>
+      <template #footer>
+        <button class="btn-secondary" @click="isCriticalModalOpen = false">Annuler</button>
+        <button class="btn-primary" @click="saveCritical">
+          <FontAwesomeIcon :icon="['fas', 'check']" />
+          Enregistrer
+        </button>
+      </template>
+    </Modal>
     </template>
   </div>
 </template>
@@ -131,7 +165,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useToastStore } from '@/stores/toast'
 // Services API
-import { getFilteredStocks } from '@/services/stock.js'
+import { getFilteredStocks, updateCriticalStock } from '@/services/stock.js'
 import { getAllLocations } from '@/services/locations.js'
 // Utils
 import { formatDate } from '@/utils/formatDate.js'
@@ -139,9 +173,33 @@ import { formatDate } from '@/utils/formatDate.js'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Loader from '@/components/ui/Loader.vue'
 import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
+import Modal from '@/components/ui/Modal.vue'
 
-const authStore = useAuthStore() // Initialisation du store
+const authStore = useAuthStore()
 const toast = useToastStore()
+
+// --- MODAL LIMITE CRITIQUE ---
+const isCriticalModalOpen = ref(false)
+const criticalTarget = ref(null)
+const criticalForm = ref({ value: null })
+
+function openCriticalModal(stock) {
+  criticalTarget.value = stock
+  criticalForm.value = { value: stock.criticalStock ?? null }
+  isCriticalModalOpen.value = true
+}
+
+async function saveCritical() {
+  try {
+    const newVal = criticalForm.value.value === '' ? null : criticalForm.value.value
+    await updateCriticalStock(criticalTarget.value.sku, locationCode.value, newVal)
+    criticalTarget.value.criticalStock = newVal
+    toast.success('Limite critique mise à jour')
+    isCriticalModalOpen.value = false
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Erreur lors de la mise à jour')
+  }
+}
 
 // --- ROUTER & ÉTAT ---
 const route = useRoute() // Location depuis l'URL
@@ -289,6 +347,19 @@ onMounted(() => {
     opacity: 1;
     color: var(--revaw-primary);
   }
+}
+
+.modal-desc {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin-bottom: $spacing-4;
+}
+
+.field-hint {
+  display: block;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+  margin-top: $spacing-1;
 }
 
 .loading-state {
