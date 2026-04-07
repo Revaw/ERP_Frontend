@@ -46,20 +46,44 @@
         </RouterLink>
       </div>
 
+      <!-- Filtre par nom -->
+      <div class="search-bar">
+        <FontAwesomeIcon :icon="['fas', 'magnifying-glass']" class="search-bar__icon" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="search-bar__input"
+          placeholder="Rechercher par nom de pièce…"
+          spellcheck="false"
+        />
+        <span v-if="searchQuery" class="search-bar__count">
+          {{ filteredStocks.length }} / {{ stocks.length }}
+        </span>
+      </div>
+
       <!-- Tableau -->
       <div class="table-wrapper">
         <table class="custom-table">
           <thead>
             <tr>
-              <th>Référence</th>
+              <th class="th-sortable" @click="toggleSort">
+                Référence
+                <span class="sort-label">{{ sortDir === 'asc' ? 'A→Z' : 'Z→A' }}</span>
+                <FontAwesomeIcon :icon="['fas', 'arrows-up-down']" class="sort-icon sort-icon--active" />
+              </th>
               <th>Quantité</th>
               <th>Limite critique</th>
               <th>Dernière mise à jour</th>
             </tr>
           </thead>
           <tbody>
+            <tr v-if="filteredStocks.length === 0 && searchQuery" class="empty-row">
+              <td colspan="4" class="empty-state">
+                Aucune pièce ne correspond à « {{ searchQuery }} »
+              </td>
+            </tr>
             <tr
-              v-for="stock in stocks"
+              v-for="stock in filteredStocks"
               :key="stock.sku"
               :class="{ 'row-critical': stock.quantity <= stock.criticalStock }"
             >
@@ -126,6 +150,27 @@ const locationCode = ref('') // Identifiant unique de l'emplacement (paramètre 
 const locationName = ref('') // Nom lisible de l'emplacement (pour l'affichage)
 const loading = ref(true) // Indicateur de chargement
 
+const searchQuery = ref('')
+const sortDir = ref('asc')
+
+function toggleSort() {
+  sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+}
+
+const filteredStocks = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  let list = q
+    ? stocks.value.filter(s =>
+        s.name?.toLowerCase().includes(q) || s.sku?.toLowerCase().includes(q)
+      )
+    : [...stocks.value]
+
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return list.slice().sort((a, b) =>
+    (a.name ?? '').localeCompare(b.name ?? '', 'fr', { sensitivity: 'base' }) * dir
+  )
+})
+
 // Nombre de pièces en stock critique
 const criticalCount = computed(() => {
   return stocks.value.filter((s) => s.quantity <= s.criticalStock).length
@@ -180,6 +225,72 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+
+  &__icon {
+    color: var(--text-tertiary);
+    font-size: $font-size-sm;
+  }
+
+  &__input {
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    width: 280px;
+    outline: none;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      border-color: var(--revaw-primary);
+    }
+
+    @media (max-width: $breakpoint-md) {
+      width: 100%;
+    }
+  }
+
+  &__count {
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+  }
+}
+
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--revaw-primary);
+  }
+}
+
+.sort-label {
+  margin-left: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--revaw-primary);
+  min-width: 2.5ch;
+  display: inline-block;
+}
+
+.sort-icon {
+  margin-left: $spacing-1;
+  font-size: $font-size-xs;
+  opacity: 0.3;
+  transition: opacity $transition-fast;
+
+  &--active {
+    opacity: 1;
+    color: var(--revaw-primary);
+  }
+}
+
 .loading-state {
   display: flex;
   justify-content: center;

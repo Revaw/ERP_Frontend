@@ -29,6 +29,7 @@ import {
   faEye,
   faEyeSlash,
   faArrowUpRightFromSquare,
+  faArrowsUpDown,
 
   // Status & Feedback
   faCircleCheck,
@@ -105,6 +106,7 @@ library.add(
   faEye,
   faEyeSlash,
   faArrowUpRightFromSquare,
+  faArrowsUpDown,
 
   // Status & Feedback
   faCircleCheck,

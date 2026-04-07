@@ -36,13 +36,32 @@
       </template>
     </div>
 
+    <!-- Filtre par nom -->
+    <div class="search-bar">
+      <FontAwesomeIcon :icon="['fas', 'magnifying-glass']" class="search-bar__icon" />
+      <input
+        v-model="searchQuery"
+        type="text"
+        class="search-bar__input"
+        placeholder="Rechercher par nom de pièce…"
+        spellcheck="false"
+      />
+      <span v-if="searchQuery" class="search-bar__count">
+        {{ filteredParts.length }} / {{ spareParts.length }}
+      </span>
+    </div>
+
     <!-- Tableau des pièces -->
     <div class="table-wrapper">
       <table class="custom-table">
         <thead>
           <tr>
             <th>SKU</th>
-            <th>Nom</th>
+            <th class="th-sortable" @click="toggleSort">
+              Nom
+              <span class="sort-label">{{ sortDir === 'asc' ? 'A→Z' : 'Z→A' }}</span>
+              <FontAwesomeIcon :icon="['fas', 'arrows-up-down']" class="sort-icon sort-icon--active" />
+            </th>
             <th>Fournisseur</th>
             <th>Unité</th>
             <th>Délai (j)</th>
@@ -51,7 +70,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="part in spareParts" :key="part.sku">
+          <tr v-if="filteredParts.length === 0 && searchQuery" class="empty-row">
+            <td :colspan="authStore.isAdmin ? 7 : 6" class="empty-state">
+              Aucune pièce ne correspond à « {{ searchQuery }} »
+            </td>
+          </tr>
+          <tr v-for="part in filteredParts" :key="part.sku">
             <!-- sku -->
             <td data-label="SKU" class="sku-cell">{{ part.sku }}</td>
             <!-- nom -->
@@ -217,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useToastStore } from '@/stores/toast.js'
 // Services API
@@ -238,6 +262,26 @@ const authStore = useAuthStore()
 const toast = useToastStore()
 // --- ÉTAT ---
 const spareParts = ref([]) // Liste complète des pièces
+const searchQuery = ref('')
+const sortDir = ref('asc')
+
+function toggleSort() {
+  sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+}
+
+const filteredParts = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  let list = q
+    ? spareParts.value.filter(p =>
+        p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
+      )
+    : [...spareParts.value]
+
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return list.slice().sort((a, b) =>
+    (a.name ?? '').localeCompare(b.name ?? '', 'fr', { sensitivity: 'base' }) * dir
+  )
+})
 const isModalOpen = ref(false) // Etat de l'affichage du modal
 const isEditing = ref(false) // Mode de la modale : false = Création, true = Édition
 // Objet formulaire réactif pour la modale
@@ -452,6 +496,72 @@ onMounted(loadParts)
   &__label {
     font-size: $font-size-sm;
     color: var(--text-secondary);
+  }
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+
+  &__icon {
+    color: var(--text-tertiary);
+    font-size: $font-size-sm;
+  }
+
+  &__input {
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid var(--border-color);
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    width: 280px;
+    outline: none;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      border-color: var(--revaw-primary);
+    }
+
+    @media (max-width: $breakpoint-md) {
+      width: 100%;
+    }
+  }
+
+  &__count {
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+  }
+}
+
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--revaw-primary);
+  }
+}
+
+.sort-label {
+  margin-left: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--revaw-primary);
+  min-width: 2.5ch;
+  display: inline-block;
+}
+
+.sort-icon {
+  margin-left: $spacing-1;
+  font-size: $font-size-xs;
+  opacity: 0.3;
+  transition: opacity $transition-fast;
+
+  &--active {
+    opacity: 1;
+    color: var(--revaw-primary);
   }
 }
 
