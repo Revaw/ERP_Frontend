@@ -142,8 +142,9 @@
         <input
           type="number"
           min="0"
+          step="any"
           v-model.number="criticalForm.value"
-          placeholder="Ex: 10"
+          placeholder="Ex: 0.35"
         />
         <span class="field-hint">Laisser vide pour désactiver l'alerte</span>
       </div>

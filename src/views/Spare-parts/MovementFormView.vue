@@ -151,7 +151,7 @@
           Stock critique
           <span class="badge">optionnel</span>
         </label>
-        <input type="number" min="0" v-model.number="form.criticalStock" />
+        <input type="number" min="0" step="any" v-model.number="form.criticalStock" />
       </div>
 
       <!-- Commentaire -->

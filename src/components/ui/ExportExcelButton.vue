@@ -8,6 +8,7 @@
 <script setup>
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
+import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
   // Fonction async appelée pour récupérer TOUTES les données (sans pagination)
@@ -38,6 +39,7 @@ const props = defineProps({
 })
 
 const loading = ref(false)
+const toast = useToastStore()
 
 async function handleExport() {
   loading.value = true
@@ -45,7 +47,7 @@ async function handleExport() {
     const data = await props.fetchFn()
 
     if (!data || data.length === 0) {
-      alert('Aucune donnée à exporter.')
+      toast.error('Aucune donnée à exporter.')
       return
     }
 
@@ -69,9 +71,10 @@ async function handleExport() {
 
     const date = new Date().toISOString().split('T')[0]
     XLSX.writeFile(workbook, `${props.filename}_${date}.xlsx`)
+    toast.success(`Export téléchargé — ${props.filename}_${date}.xlsx`)
   } catch (err) {
     console.error('Erreur export Excel:', err)
-    alert("Erreur lors de l'export.")
+    toast.error("Erreur lors de l'export.")
   } finally {
     loading.value = false
   }
