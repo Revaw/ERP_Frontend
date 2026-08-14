@@ -1,10 +1,6 @@
 <template>
-  <div class="page">
-    <div class="page__header">
-      <h1 class="page__title">Versions firmware</h1>
-      <p class="page__subtitle">Catalogue des versions disponibles pour les batteries</p>
-    </div>
-
+  <!-- Contenu embarqué dans ModelesVersionsView (onglet Versions) — pas d'en-tête de page ici -->
+  <div>
     <!-- Toolbar (moderateur+) -->
     <div v-if="authStore.isAdmin" class="toolbar">
       <button class="btn-primary" @click="openAdd">

@@ -1,18 +1,9 @@
 <template>
-  <div class="page">
-    <div class="page__header">
-      <div>
-        <h1 class="page__title">Modèles de batterie</h1>
-        <p class="page__subtitle">
-          Référentiel des fiches modèles — données du passeport batterie UE 2023/1542
-        </p>
-      </div>
-      <ButtonBack />
-    </div>
-
+  <!-- Contenu embarqué dans ModelesVersionsView (onglet Modèles) — pas d'en-tête de page ici -->
+  <div>
     <!-- Toolbar -->
     <div class="toolbar">
-      <button class="btn-primary" @click="openAddModal">
+      <button v-if="authStore.isAdmin" class="btn-primary" @click="openAddModal">
         <FontAwesomeIcon :icon="['fas', 'plus']" />
         Créer un modèle
       </button>
@@ -65,7 +56,7 @@
                 Détails
               </RouterLink>
               <button
-                v-if="modele.isActive"
+                v-if="authStore.isAdmin && modele.isActive"
                 class="btn-icon btn-icon--danger"
                 @click="prepareDeactivate(modele)"
                 title="Désactiver"
@@ -73,7 +64,7 @@
                 <FontAwesomeIcon :icon="['fas', 'ban']" />
               </button>
               <button
-                v-else
+                v-else-if="authStore.isAdmin"
                 class="btn-icon"
                 @click="handleReactivate(modele)"
                 title="Réactiver"
@@ -187,6 +178,7 @@
 import { ref, onMounted, computed } from 'vue'
 //store
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth.js'
 // Services API
 import {
   getAllModeles,
@@ -197,10 +189,10 @@ import {
 // Utils
 import { formatDate } from '@/utils/formatDate.js'
 // Composants UI
-import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Modal from '@/components/ui/Modal.vue'
 
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 // --- ÉTAT RÉACTIF ---
 const modeles = ref([]) // Liste complète des fiches (actives et inactives)
@@ -305,42 +297,6 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: $spacing-6;
-  animation: fadeIn $transition-base ease-out;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
-
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: $spacing-4;
-    margin-bottom: $spacing-6;
-
-    @media (max-width: $breakpoint-sm) {
-      flex-direction: column;
-    }
-  }
-
-  &__title {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  &__subtitle {
-    font-size: $font-size-sm;
-    color: var(--text-secondary);
-    margin: $spacing-1 0 0 0;
-  }
-}
-
 // Toolbar
 .toolbar {
   display: flex;

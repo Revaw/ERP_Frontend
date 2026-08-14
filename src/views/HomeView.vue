@@ -45,12 +45,12 @@
         </div>
         <span class="quick-nav__label">Devices</span>
       </RouterLink>
-      <!-- Versions -->
-      <RouterLink to="/admin/versions" class="quick-nav__item">
+      <!-- Modèles & versions (référentiel produit) -->
+      <RouterLink to="/admin/modeles" class="quick-nav__item">
         <div class="quick-nav__icon quick-nav__icon--blue">
           <FontAwesomeIcon :icon="['fas', 'tag']" />
         </div>
-        <span class="quick-nav__label">Versions</span>
+        <span class="quick-nav__label">Modèles & versions</span>
       </RouterLink>
       <!-- Statistiques -->
       <RouterLink to="/stats" class="quick-nav__item">
@@ -58,13 +58,6 @@
           <FontAwesomeIcon :icon="['fas', 'chart-pie']" />
         </div>
         <span class="quick-nav__label">Statistiques</span>
-      </RouterLink>
-      <!-- Modèles de batterie (fiches passeport) — admins uniquement -->
-      <RouterLink v-if="authStore.isAdmin" to="/admin/modeles" class="quick-nav__item">
-        <div class="quick-nav__icon quick-nav__icon--orange">
-          <FontAwesomeIcon :icon="['fas', 'id-card']" />
-        </div>
-        <span class="quick-nav__label">Modèles de batterie</span>
       </RouterLink>
       <!-- Gestion des Administrateurs -->
       <RouterLink v-if="authStore.isSuperAdmin" to="/admin/users" class="quick-nav__item">

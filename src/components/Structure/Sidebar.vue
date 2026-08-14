@@ -42,9 +42,9 @@
           </RouterLink>
         </li>
         <li>
-          <RouterLink to="/admin/versions" class="sidebar__link" @click="closeMobile">
+          <RouterLink to="/admin/modeles" class="sidebar__link" @click="closeMobile">
             <FontAwesomeIcon class="sidebar__icon" :icon="['fas', 'tag']" />
-            <span>Versions</span>
+            <span>Modèles & versions</span>
           </RouterLink>
         </li>
         <li>

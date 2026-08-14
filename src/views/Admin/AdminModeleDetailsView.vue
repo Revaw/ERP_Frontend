@@ -43,11 +43,19 @@
             </span>
           </div>
           <div class="meta-item">
-            <button v-if="!isEditing && modele.isActive" class="btn-primary" @click="startEdit">
+            <button
+              v-if="authStore.isAdmin && !isEditing && modele.isActive"
+              class="btn-primary"
+              @click="startEdit"
+            >
               <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
               Modifier
             </button>
-            <button v-if="!modele.isActive" class="btn-secondary" @click="handleReactivate">
+            <button
+              v-if="authStore.isAdmin && !modele.isActive"
+              class="btn-secondary"
+              @click="handleReactivate"
+            >
               <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
               Réactiver
             </button>
@@ -183,6 +191,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth.js'
 import { getModeleByNom, updateModele, reactivateModele } from '@/services/modele.js'
 import { formatDate } from '@/utils/formatDate.js'
 import ButtonBack from '@/components/ui/ButtonBack.vue'
@@ -192,6 +201,7 @@ const props = defineProps({
 })
 
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 const modele = ref(null)
 const isEditing = ref(false)
