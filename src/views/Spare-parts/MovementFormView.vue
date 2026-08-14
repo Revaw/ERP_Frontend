@@ -123,9 +123,11 @@
         <!-- Coût total -->
         <div class="form-group half" v-if="mode === 'in'">
           <label>Coût total (€)</label>
+          <!-- step="any" : les petites pièces (vis...) ont des prix sous le centime,
+               un step 0.01 bloquait la saisie de qty=1 / total=0.032 par exemple -->
           <input
             type="number"
-            step="0.01"
+            step="any"
             min="0"
             v-model.number="form.total_cost"
             placeholder="0.00"
