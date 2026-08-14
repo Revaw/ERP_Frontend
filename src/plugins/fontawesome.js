@@ -56,6 +56,14 @@ import {
   faBoxArchive,
   faInbox,
 
+  // Modèles de batterie (fiches passeport)
+  faLock,
+  faIdCard,
+  faBolt,
+  faGaugeHigh,
+  faFlask,
+  faLeaf,
+
   // Users
   faUsersGear,
   faUser,
@@ -132,6 +140,14 @@ library.add(
   faGear,
   faBoxArchive,
   faInbox,
+
+  // Modèles de batterie (fiches passeport)
+  faLock,
+  faIdCard,
+  faBolt,
+  faGaugeHigh,
+  faFlask,
+  faLeaf,
 
   // Users
   faUsersGear,

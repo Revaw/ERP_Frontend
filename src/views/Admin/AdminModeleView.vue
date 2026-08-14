@@ -72,6 +72,14 @@
               >
                 <FontAwesomeIcon :icon="['fas', 'ban']" />
               </button>
+              <button
+                v-else
+                class="btn-icon"
+                @click="handleReactivate(modele)"
+                title="Réactiver"
+              >
+                <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
+              </button>
             </td>
           </tr>
           <tr v-if="filteredModeles.length === 0">
@@ -180,7 +188,12 @@ import { ref, onMounted, computed } from 'vue'
 //store
 import { useToastStore } from '@/stores/toast'
 // Services API
-import { getAllModeles, createModele, deactivateModele } from '@/services/modele.js'
+import {
+  getAllModeles,
+  createModele,
+  deactivateModele,
+  reactivateModele,
+} from '@/services/modele.js'
 // Utils
 import { formatDate } from '@/utils/formatDate.js'
 // Composants UI
@@ -246,6 +259,20 @@ const saveForm = async () => {
     closeModal()
   } catch (err) {
     toast.error(err.response?.data?.message || 'Erreur création modèle')
+  }
+}
+
+/**
+ * Réactive une fiche désactivée (action directe, sans modale :
+ * l'opération est sans risque et tracée dans l'historique)
+ */
+const handleReactivate = async (modele) => {
+  try {
+    await reactivateModele(modele.nom)
+    modeles.value = await getAllModeles(true)
+    toast.success(`Modèle ${modele.nom} réactivé`)
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Erreur réactivation')
   }
 }
 

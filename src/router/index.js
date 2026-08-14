@@ -17,6 +17,7 @@ import AdminLocationsView from '@/views/Admin/AdminLocationsView.vue'
 import AdminBomView from '@/views/Admin/AdminBomView.vue'
 import AdminBomDetailsView from '@/views/Admin/AdminBomDetailsView.vue'
 import AdminModeleView from '@/views/Admin/AdminModeleView.vue'
+import AdminModeleDetailsView from '@/views/Admin/AdminModeleDetailsView.vue'
 import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
 import VersionsView from '@/views/Admin/VersionsView.vue'
@@ -106,6 +107,12 @@ const router = createRouter({
       path: '/admin/modeles',
       name: 'admin-modeles',
       component: AdminModeleView,
+    },
+    {
+      path: '/admin/modeles/:nom',
+      name: 'admin-modele-details',
+      component: AdminModeleDetailsView,
+      props: true,
     },
     {
       path: '/inventory/:location',

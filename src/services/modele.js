@@ -85,3 +85,17 @@ export async function deactivateModele(nom) {
     throw err
   }
 }
+
+/**
+ * Réactiver une fiche modèle désactivée
+ * @param {String} nom
+ */
+export async function reactivateModele(nom) {
+  try {
+    const res = await axios.patch(`${API_URL}/${encodeURIComponent(nom)}/reactivate`)
+    return res.data
+  } catch (err) {
+    console.error('Erreur API reactivateModele:', err)
+    throw err
+  }
+}
