@@ -35,23 +35,29 @@ git commit -m "chore: release vX.Y.Z"
 git push
 ```
 
-### 4. Build l'application
+### 4. Build l'application (signature integree)
 
-```bash
+> Depuis la v0.4.0, la signature se fait PENDANT le build (option
+> `createUpdaterArtifacts` du tauri.conf.json) : plus d'etape de signature
+> manuelle, et il est impossible de signer un exe d'un autre build.
+
+Dans le terminal, definir la cle puis builder :
+
+```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content "chemin\vers\private.key" -Raw
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "mot de passe de la cle"
 npm run tauri:build
 ```
 
-Le `.exe` sera dans : `src-tauri/target/release/bundle/nsis/`
+Resultat dans `src-tauri/target/release/bundle/nsis/` :
 
-### 5. Signer le build
+- `Revaw ERP_X.Y.Z_x64-setup.exe` — l'installateur
+- `Revaw ERP_X.Y.Z_x64-setup.exe.sig` — la signature (contenu a coller dans latest.json)
 
-```bash
-npx tauri signer sign -f private.key -p "XXXMDPXXX" "src-tauri/target/release/bundle/nsis/Revaw ERP_X.Y.Z_x64-setup.exe"
-```
+> Si le build echoue avec "private key not found" : les variables `$env:`
+> ci-dessus manquent dans le terminal courant.
 
-Copie la **signature** affichee dans le terminal (le bloc base64 apres "Public signature:").
-
-### 6. Mettre a jour latest.json
+### 5. Mettre a jour latest.json
 
 Edite `latest.json` a la racine :
 
@@ -63,7 +69,7 @@ Edite `latest.json` a la racine :
   "platforms": {
     "windows-x86_64": {
       "url": "https://github.com/Revaw/ERP_Frontend/releases/download/vX.Y.Z/Revaw.ERP_X.Y.Z_x64-setup.exe",
-      "signature": "COLLER_LA_SIGNATURE_ICI"
+      "signature": "COLLER ICI LE CONTENU DU FICHIER .sig"
     }
   }
 }
@@ -71,7 +77,7 @@ Edite `latest.json` a la racine :
 
 > **Attention** : l'URL utilise un `.` au lieu d'un espace (`Revaw.ERP` et non `Revaw ERP`), car GitHub remplace les espaces par des points dans les noms d'assets.
 
-### 7. Creer la release sur GitHub
+### 6. Creer la release sur GitHub
 
 1. Va sur GitHub > Releases > **Create a new release**
 2. Tag : `vX.Y.Z`
@@ -82,7 +88,7 @@ Edite `latest.json` a la racine :
    - `latest.json` (depuis la racine du projet)
 6. Publier
 
-### 8. Verifier
+### 7. Verifier
 
 Les utilisateurs ayant une version anterieure verront automatiquement une boite de dialogue au lancement de l'app leur proposant la mise a jour.
 
@@ -90,6 +96,7 @@ Les utilisateurs ayant une version anterieure verront automatiquement une boite 
 
 ## Rappels importants
 
-- La **signature** et le **exe** doivent provenir du **meme build**. Si tu rebuild, tu dois re-signer.
+- La signature est maintenant produite par le build lui-meme (`.sig` a cote de l'exe) : exe et signature sont toujours du meme build par construction.
 - Ne jamais partager `private.key`. Si tu la perds, tu devras regenerer une paire de cles et tous les anciens clients ne pourront plus verifier les mises a jour.
 - Le fichier `latest.json` n'est **pas** dans le repo (gitignore). Il est uploade uniquement comme asset de release.
+- Si le workspace est deplace, purger `src-tauri/target` (`Remove-Item -Recurse -Force src-tauri\target`) : le cache Rust memorise des chemins absolus (vecu le 14/08/2026).
