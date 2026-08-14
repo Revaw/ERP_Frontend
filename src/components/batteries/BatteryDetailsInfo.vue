@@ -49,13 +49,28 @@
             <span class="info-row__label">Score</span>
             <span class="info-row__value">{{ battery.score || 'Non renseigné' }}</span>
           </div>
-          <div class="info-row">
+          <!-- Source et Type : spécifiques aux batteries seconde vie (UI Hivitec).
+               Masqués si absents (futurs produits / autres prestataires). -->
+          <div class="info-row" v-if="sourceType">
             <span class="info-row__label">Source</span>
-            <span class="info-row__value">{{ sourceType || 'Non renseigné' }}</span>
+            <span class="info-row__value">{{ sourceType }}</span>
           </div>
           <div class="info-row">
+            <span class="info-row__label">Modèle</span>
+            <!-- Absent si batterie non finalisée (le modèle est choisi au finish) -->
+            <RouterLink
+              v-if="battery.modele && authStore.isAdmin"
+              :to="`/admin/modeles/${battery.modele}`"
+              class="info-row__link"
+              title="Voir la fiche modèle"
+            >
+              {{ battery.modele }}
+            </RouterLink>
+            <span v-else class="info-row__value">{{ battery.modele || '—' }}</span>
+          </div>
+          <div class="info-row" v-if="battery.type">
             <span class="info-row__label">Type</span>
-            <span class="info-row__value">{{ battery.type || 'Non renseigné' }}</span>
+            <span class="info-row__value">{{ battery.type }}</span>
           </div>
           <div class="info-row">
             <span class="info-row__label">Capacité</span>
@@ -507,7 +522,8 @@ const sourceType = computed(() => {
     D: ' 9.6kwh Alu',
     E: ' 9.6kwh Acier',
   }
-  return types[battery.value?.type] || 'Inconnu'
+  // null si type absent ou inconnu → la ligne Source est masquée
+  return types[battery.value?.type] || null
 })
 
 const openVersionModal = async () => {
