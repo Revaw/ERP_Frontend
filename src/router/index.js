@@ -16,6 +16,8 @@ import MovementListView from '@/views/Spare-parts/MovementListView.vue'
 import AdminLocationsView from '@/views/Admin/AdminLocationsView.vue'
 import AdminBomView from '@/views/Admin/AdminBomView.vue'
 import AdminBomDetailsView from '@/views/Admin/AdminBomDetailsView.vue'
+import ModelesVersionsView from '@/views/Admin/ModelesVersionsView.vue'
+import AdminModeleDetailsView from '@/views/Admin/AdminModeleDetailsView.vue'
 import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
 import VersionsView from '@/views/Admin/VersionsView.vue'
@@ -102,6 +104,18 @@ const router = createRouter({
       props: true,
     },
     {
+      path: '/admin/modeles',
+      name: 'admin-modeles',
+      component: ModelesVersionsView,
+      props: { tab: 'modeles' },
+    },
+    {
+      path: '/admin/modeles/:nom',
+      name: 'admin-modele-details',
+      component: AdminModeleDetailsView,
+      props: true,
+    },
+    {
       path: '/inventory/:location',
       name: 'inventory',
       component: InventoryView,
@@ -125,7 +139,8 @@ const router = createRouter({
     {
       path: '/admin/versions',
       name: 'admin-versions',
-      component: VersionsView,
+      component: ModelesVersionsView,
+      props: { tab: 'versions' },
     },
     {
       path: '/stats',

@@ -1,10 +1,6 @@
 <template>
-  <div class="page">
-    <div class="page__header">
-      <h1 class="page__title">Versions firmware</h1>
-      <p class="page__subtitle">Catalogue des versions disponibles pour les batteries</p>
-    </div>
-
+  <!-- Contenu embarqué dans ModelesVersionsView (onglet Versions) — pas d'en-tête de page ici -->
+  <div>
     <!-- Toolbar (moderateur+) -->
     <div v-if="authStore.isAdmin" class="toolbar">
       <button class="btn-primary" @click="openAdd">
@@ -29,6 +25,7 @@
         <thead>
           <tr>
             <th>Version</th>
+            <th>Modèles</th>
             <th>Description</th>
             <th>Chemin fichier</th>
             <th>Statut</th>
@@ -39,6 +36,14 @@
         <tbody>
           <tr v-for="v in versions" :key="v._id" :class="{ 'row-inactive': v.isActive === false }">
             <td data-label="Version" class="version-cell">{{ v.version }}</td>
+            <!-- Deux versions peuvent porter le même numéro (produits différents) :
+                 les modèles concernés les désambiguïsent -->
+            <td data-label="Modèles">
+              <span v-if="v.modeles?.length" class="modeles-chips">
+                <span v-for="m in v.modeles" :key="m" class="modele-chip">{{ m }}</span>
+              </span>
+              <span v-else class="text-muted">—</span>
+            </td>
             <td data-label="Description" class="text-muted">{{ v.description || '—' }}</td>
             <td data-label="Chemin" class="path-cell">{{ v.path || '—' }}</td>
             <td data-label="Statut">
@@ -74,7 +79,7 @@
             </td>
           </tr>
           <tr v-if="versions.length === 0">
-            <td colspan="6" class="empty-state">Aucune version enregistrée.</td>
+            <td colspan="7" class="empty-state">Aucune version enregistrée.</td>
           </tr>
         </tbody>
       </table>
@@ -95,6 +100,18 @@
             placeholder="Ex : 1.4.2"
             required
           />
+        </div>
+        <div class="form-group">
+          <label>Modèles concernés</label>
+          <div class="modeles-checkboxes">
+            <label v-for="m in modelesDisponibles" :key="m.nom" class="modele-checkbox">
+              <input type="checkbox" :value="m.nom" v-model="form.modeles" />
+              <span>{{ m.nom }} ({{ m.capaciteKwh }} kWh)</span>
+            </label>
+            <p v-if="modelesDisponibles.length === 0" class="text-muted">
+              Aucune fiche modèle — les créer d'abord dans « Modèles de batterie ».
+            </p>
+          </div>
         </div>
         <div class="form-group">
           <label for="v-description">Description</label>
@@ -129,6 +146,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useToastStore } from '@/stores/toast.js'
 import { getAllVersions, createVersion, updateVersion } from '@/services/versions.js'
+import { getAllModeles } from '@/services/modele.js'
 import Modal from '@/components/ui/Modal.vue'
 import Loader from '@/components/ui/Loader.vue'
 
@@ -143,7 +161,8 @@ const isModalOpen = ref(false)
 const isEditing = ref(false)
 const editingId = ref(null)
 
-const form = ref({ version: '', description: '', path: '' })
+const form = ref({ version: '', description: '', path: '', modeles: [] })
+const modelesDisponibles = ref([]) // fiches modèles actives (checkboxes de la modale)
 
 async function load() {
   loading.value = true
@@ -157,17 +176,30 @@ async function load() {
   }
 }
 
+async function loadModeles() {
+  try {
+    modelesDisponibles.value = await getAllModeles()
+  } catch {
+    // Silencieux : la vue reste utilisable, les checkboxes seront vides
+  }
+}
+
 function openAdd() {
   isEditing.value = false
   editingId.value = null
-  form.value = { version: '', description: '', path: '' }
+  form.value = { version: '', description: '', path: '', modeles: [] }
   isModalOpen.value = true
 }
 
 function openEdit(v) {
   isEditing.value = true
   editingId.value = v._id
-  form.value = { version: v.version, description: v.description || '', path: v.path || '' }
+  form.value = {
+    version: v.version,
+    description: v.description || '',
+    path: v.path || '',
+    modeles: [...(v.modeles || [])],
+  }
   isModalOpen.value = true
 }
 
@@ -180,6 +212,10 @@ async function saveForm() {
     toast.error('Le champ version est obligatoire')
     return
   }
+  if (form.value.modeles.length === 0) {
+    toast.error('Sélectionner au moins un modèle concerné')
+    return
+  }
   saving.value = true
   try {
     if (isEditing.value) {
@@ -187,6 +223,7 @@ async function saveForm() {
         version: form.value.version,
         description: form.value.description,
         path: form.value.path,
+        modeles: form.value.modeles,
       })
       toast.success('Version mise à jour')
     } else {
@@ -194,6 +231,7 @@ async function saveForm() {
         version: form.value.version,
         description: form.value.description,
         path: form.value.path,
+        modeles: form.value.modeles,
       })
       toast.success('Version créée')
     }
@@ -225,7 +263,10 @@ function formatDate(iso) {
   })
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadModeles()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -250,6 +291,45 @@ onMounted(load)
 .text-muted {
   color: var(--text-tertiary);
   font-size: $font-size-sm;
+}
+
+// Chips des modèles concernés par une version
+.modeles-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+}
+
+.modele-chip {
+  padding: $spacing-1 $spacing-2;
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  font-family: $font-family-mono;
+}
+
+// Checkboxes de sélection des modèles (modale)
+.modeles-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.modele-checkbox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--revaw-primary);
+  }
 }
 
 .row-inactive {

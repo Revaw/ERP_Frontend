@@ -45,12 +45,12 @@
         </div>
         <span class="quick-nav__label">Devices</span>
       </RouterLink>
-      <!-- Versions -->
-      <RouterLink to="/admin/versions" class="quick-nav__item">
+      <!-- Modèles & versions (référentiel produit) -->
+      <RouterLink to="/admin/modeles" class="quick-nav__item">
         <div class="quick-nav__icon quick-nav__icon--blue">
           <FontAwesomeIcon :icon="['fas', 'tag']" />
         </div>
-        <span class="quick-nav__label">Versions</span>
+        <span class="quick-nav__label">Modèles & versions</span>
       </RouterLink>
       <!-- Statistiques -->
       <RouterLink to="/stats" class="quick-nav__item">
