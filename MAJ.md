@@ -77,6 +77,11 @@ Edite `latest.json` a la racine :
 
 > **Attention** : l'URL utilise un `.` au lieu d'un espace (`Revaw.ERP` et non `Revaw ERP`), car GitHub remplace les espaces par des points dans les noms d'assets.
 
+> **Attention BOM** (vecu le 14/08/2026) : le fichier doit etre en UTF-8 **sans BOM**,
+> sinon l'app affiche "error decoding response body" a chaque lancement.
+> Ne PAS le generer avec `Out-File`/`>` en PowerShell 5.1 (qui ajoutent un BOM) —
+> l'editer dans VS Code (encodage "UTF-8" affiche en bas a droite, pas "UTF-8 with BOM").
+
 ### 6. Creer la release sur GitHub
 
 1. Va sur GitHub > Releases > **Create a new release**
