@@ -216,6 +216,10 @@ async function saveForm() {
     toast.error('Le champ version est obligatoire')
     return
   }
+  if (form.value.modeles.length === 0) {
+    toast.error('Sélectionner au moins un modèle concerné')
+    return
+  }
   saving.value = true
   try {
     if (isEditing.value) {
