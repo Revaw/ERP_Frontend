@@ -78,7 +78,9 @@
           </div>
           <div class="info-row">
             <span class="info-row__label">Statut</span>
-            <span class="info-row__value">{{ battery.status || 'Non renseigné' }}</span>
+            <!-- Statut DÉRIVÉ (dates + flags), comme les badges de la liste.
+                 Le champ battery.status stocké est mort (jamais écrit) — voir inventaire-statuts.md -->
+            <span class="info-row__value">{{ getStatusText(battery) }}</span>
           </div>
         </div>
       </CustomBloc>
@@ -287,7 +289,7 @@ import BatteryCommentaryForm from './BatteryCommentaryForm.vue'
 import Modal from '../ui/Modal.vue'
 // Utilitaires
 import { formatDate } from '@/utils/formatDate'
-import { getBatteryKwh } from '@/utils/batteryHelpers'
+import { getBatteryKwh, getStatusText } from '@/utils/batteryHelpers'
 
 const authStore = useAuthStore() // Initialisation du store
 const toast = useToastStore()
