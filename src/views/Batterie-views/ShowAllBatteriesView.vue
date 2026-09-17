@@ -29,7 +29,12 @@
 
       <div class="filters-card__body">
         <div class="filters-group">
-          <span class="filters-group__label">Statut</span>
+          <div class="filters-group__label-row">
+            <span class="filters-group__label">Statut</span>
+            <button class="btn-link" type="button" @click="deselectAllStatuses">
+              Tout désélectionner
+            </button>
+          </div>
           <div class="filters-group__items">
             <label class="filter-check">
               <input type="checkbox" v-model="filters.prod" />
@@ -135,6 +140,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { isTauri } from '@/utils/tauri'
 // Composants UI
 import BatteryCard from '@/components/batteries/BatteryCard.vue'
@@ -157,8 +163,11 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 
 // --- ÉTAT RÉACTIF : FILTRES ---
-// critères de filtrage envoyés au backend.
-const filters = ref({
+const route = useRoute()
+const router = useRouter()
+
+// Valeurs par défaut des filtres (aussi utilisées par resetFilters).
+const DEFAULT_FILTERS = {
   prod: true, // Checkbox: Afficher "En production"
   exp: true, // Checkbox: Afficher "Expédiée"
   sav: true, // Checkbox: Afficher "SAV"
@@ -169,12 +178,45 @@ const filters = ref({
   endDate: null, // Date fin
   kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8.4)
   serial: '', // Recherche par numéro de série
-})
+}
 
-//Surveille l'objet 'filters'.
+// Reconstruit l'état des filtres à partir des query params de l'URL,
+// afin qu'un retour arrière restaure la sélection au lieu de la réinitialiser.
+function filtersFromQuery(query) {
+  const bool = (key) => (query[key] !== undefined ? query[key] === 'true' : DEFAULT_FILTERS[key])
+  return {
+    prod: bool('prod'),
+    exp: bool('exp'),
+    sav: bool('sav'),
+    wait: bool('wait'),
+    isCanceled: bool('isCanceled'),
+    isInTest: bool('isInTest'),
+    startDate: query.startDate || DEFAULT_FILTERS.startDate,
+    endDate: query.endDate || DEFAULT_FILTERS.endDate,
+    kwh: query.kwh || DEFAULT_FILTERS.kwh,
+    serial: query.serial || DEFAULT_FILTERS.serial,
+  }
+}
+
+// Ne garde dans l'URL que les valeurs qui diffèrent des valeurs par défaut,
+// pour ne pas polluer la barre d'adresse quand rien n'est filtré.
+function queryFromFilters(f) {
+  const q = {}
+  for (const key of Object.keys(DEFAULT_FILTERS)) {
+    if (f[key] !== DEFAULT_FILTERS[key] && f[key] !== null && f[key] !== '') {
+      q[key] = String(f[key])
+    }
+  }
+  return q
+}
+
+const filters = ref(filtersFromQuery(route.query))
+
+//Surveille l'objet 'filters' : recharge la liste et synchronise l'URL.
 watch(
   filters,
   () => {
+    router.replace({ query: queryFromFilters(filters.value) })
     loadPage(1)
   },
   { deep: true },
@@ -213,18 +255,17 @@ const rangeText = computed(() => {
 })
 
 function resetFilters() {
-  filters.value = {
-    prod: true,
-    exp: true,
-    sav: true,
-    wait: true,
-    isCanceled: false,
-    isInTest: false,
-    startDate: null,
-    endDate: null,
-    kwh: '',
-    serial: '',
-  }
+  filters.value = { ...DEFAULT_FILTERS }
+}
+
+// Décoche les 6 statuts d'un coup, sans toucher aux autres filtres (dates, modèle, n° série).
+function deselectAllStatuses() {
+  filters.value.prod = false
+  filters.value.exp = false
+  filters.value.sav = false
+  filters.value.wait = false
+  filters.value.isCanceled = false
+  filters.value.isInTest = false
 }
 
 // --- EXPORT EXCEL ---
@@ -325,6 +366,21 @@ const openMonabeePortal = async () => {
   }
 }
 
+.btn-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--revaw-primary);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
 .filters-group {
   display: flex;
   flex-direction: column;
@@ -336,6 +392,12 @@ const openMonabeePortal = async () => {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.03em;
+  }
+
+  &__label-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
   }
 
   &__items {
