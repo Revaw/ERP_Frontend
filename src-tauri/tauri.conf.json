@@ -38,7 +38,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/Revaw/ERP_Frontend/releases/latest/download/latest.json"
+        "https://ota.revaw.fr/erp/latest.json"
       ],
       "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk5Q0EwMTQ2MzlEQjBBNDkKUldSSkN0czVSZ0hLbWVLU296Q3hVUHhxVUVHUTdPYkRTaWNSdUhKYytZTFh3cW5QdEEvNEpUQ3cK"
