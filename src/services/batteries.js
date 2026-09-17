@@ -45,6 +45,7 @@ export async function getBatteriesPaginated(page = 1, limit = 100, filters = {})
     if (filters.endDate) params.append('endDate', filters.endDate)
     if (filters.wait) params.append('wait', filters.wait)
     if (filters.isCanceled !== undefined) params.append('isCanceled', filters.isCanceled)
+    if (filters.isInTest !== undefined) params.append('isInTest', filters.isInTest)
     if (filters.kwh) params.append('kwh', filters.kwh)
     if (filters.serial) params.append('serial', filters.serial)
 
@@ -120,6 +121,13 @@ export async function getMonthlyExpeditions() {
 export async function updateBatteryCancellation(serial, isCanceled) {
   // On envoie le booléen souhaité dans le body
   const res = await axios.post(`${API_URL}/battery/${serial}/cancel-status`, { isCanceled })
+  return res.data
+}
+
+// Met a jour le statut "En test" d'une batterie
+export async function updateBatteryTestStatus(serial, isInTest) {
+  // On envoie le booléen souhaité dans le body
+  const res = await axios.post(`${API_URL}/battery/${serial}/test-status`, { isInTest })
   return res.data
 }
 

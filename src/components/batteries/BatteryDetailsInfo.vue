@@ -16,6 +16,16 @@
         </div>
       </CustomBloc>
 
+      <!-- En test -->
+      <CustomBloc v-if="battery.isInTest" title="Cette batterie est en test">
+        <div v-if="authStore.isAdmin" class="alert-state alert-state--warning">
+          <p>Vous pouvez sortir cette batterie du mode test.</p>
+          <button class="btn-primary" @click="toggleTestStatus(false)">
+            <FontAwesomeIcon :icon="['fas', 'rotate-left']" /> Sortir du test
+          </button>
+        </div>
+      </CustomBloc>
+
       <!-- Informations générales -->
       <CustomBloc title="Informations générales">
         <div class="details-grid">
@@ -223,9 +233,18 @@
       <!-- Actions Admin -->
       <div v-if="authStore.isAdmin" class="admin-actions">
         <CustomBloc v-if="!battery.isCanceled" title="Actions">
-          <button class="btn-danger" @click="toggleCancellation(true)">
-            <FontAwesomeIcon :icon="['fas', 'trash']" /> Annuler cette batterie
-          </button>
+          <div class="admin-actions__buttons">
+            <button
+              v-if="!battery.isInTest"
+              class="btn-secondary"
+              @click="toggleTestStatus(true)"
+            >
+              <FontAwesomeIcon :icon="['fas', 'flask']" /> Mettre en test
+            </button>
+            <button class="btn-danger" @click="toggleCancellation(true)">
+              <FontAwesomeIcon :icon="['fas', 'trash']" /> Annuler cette batterie
+            </button>
+          </div>
         </CustomBloc>
 
         <CustomBloc title="Garantie">
@@ -272,6 +291,7 @@ import { useToastStore } from '@/stores/toast'
 import {
   addOrUpdateCommentary,
   updateBatteryCancellation,
+  updateBatteryTestStatus,
   updateWarrantyRevocation,
   updateBatteryVersion,
 } from '@/services/batteries'
@@ -515,6 +535,35 @@ const toggleCancellation = (newState) => {
     newState ? 'Annuler la batterie' : 'Réintégrer',
   )
 }
+
+/**
+ * @description Bascule le statut "En test" de la batterie.
+ * @param {Boolean} newState - true pour mettre en test, false pour en sortir.
+ */
+const toggleTestStatus = (newState) => {
+  const title = newState ? 'Mettre en test' : 'Sortir du test'
+  const message = newState
+    ? `Voulez-vous vraiment mettre la batterie ${battery.value.NumeroSerie} en test ?`
+    : `Voulez-vous sortir la batterie ${battery.value.NumeroSerie} du mode test ?`
+
+  const action = async () => {
+    try {
+      await updateBatteryTestStatus(battery.value.NumeroSerie, newState)
+      toast.success(newState ? 'Batterie mise en test' : 'Batterie sortie du test')
+      emit('refresh')
+    } catch {
+      toast.error("Erreur lors de l'opération")
+    }
+  }
+
+  openConfirm(
+    title,
+    message,
+    action,
+    newState ? 'btn-secondary' : 'btn-primary',
+    newState ? 'Mettre en test' : 'Sortir du test',
+  )
+}
 // --- DATA SOURCE ---
 const sourceType = computed(() => {
   const types = {
@@ -733,6 +782,12 @@ const toggleWarrantyRevocation = (newState) => {
   display: flex;
   flex-direction: column;
   gap: $spacing-5;
+
+  &__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-3;
+  }
 }
 
 .text-muted {
