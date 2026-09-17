@@ -51,6 +51,10 @@
               <input type="checkbox" v-model="filters.isCanceled" />
               <CustomTag text="Annulée" variant="red-tag" />
             </label>
+            <label class="filter-check">
+              <input type="checkbox" v-model="filters.isInTest" />
+              <CustomTag text="En test" variant="grey-tag" />
+            </label>
           </div>
         </div>
 
@@ -160,6 +164,7 @@ const filters = ref({
   sav: true, // Checkbox: Afficher "SAV"
   wait: true, // Checkbox: Afficher "En stock"
   isCanceled: false, // Checkbox: Afficher "Annulée" (Défaut à false pour ne pas polluer la vue)
+  isInTest: false, // Checkbox: Afficher "En test" (Défaut à false pour ne pas polluer la vue)
   startDate: null, // Date début (Filtre sur date expédition)
   endDate: null, // Date fin
   kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8.4)
@@ -214,6 +219,7 @@ function resetFilters() {
     sav: true,
     wait: true,
     isCanceled: false,
+    isInTest: false,
     startDate: null,
     endDate: null,
     kwh: '',
@@ -230,6 +236,7 @@ const exportColumns = [
   { key: 'TimestampExpedition', label: 'Date expédition' },
   { key: 'sav_status', label: 'SAV' },
   { key: 'isCanceled', label: 'Annulée' },
+  { key: 'isInTest', label: 'En test' },
 ]
 
 async function fetchForExport() {

@@ -7,10 +7,11 @@ import { formatDate } from '@/utils/formatDate.js'
 /**
  * Détermine le libellé textuel du statut d'une batterie selon ses propriétés.
  * @param {Object} battery - L'objet batterie
- * @returns {String} Le libellé (Annulée, SAV, Expédiée, En stock, En production)
+ * @returns {String} Le libellé (Annulée, En test, SAV, Expédiée, En stock, En production)
  */
 export function getStatusText(battery) {
   if (battery.isCanceled) return 'Annulée'
+  if (battery.isInTest) return 'En test'
   if (battery.sav_status) return 'SAV'
   if (battery.TimestampExpedition) return 'Expédiée'
   if (battery.TimestampTestDone) return 'En stock'
@@ -23,7 +24,9 @@ export function getStatusText(battery) {
  * @returns {String} La classe du tag (red-tag, green-tag, etc.)
  */
 export function getStatusVariant(battery) {
-  if (battery.sav_status || battery.isCanceled) return 'red-tag'
+  if (battery.isCanceled) return 'red-tag'
+  if (battery.isInTest) return 'grey-tag'
+  if (battery.sav_status) return 'red-tag'
   if (battery.TimestampExpedition) return 'green-tag'
   if (battery.TimestampTestDone) return 'blue-tag'
   return 'yellow-tag'
