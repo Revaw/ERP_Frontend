@@ -28,59 +28,12 @@
     <template v-else>
       <!-- Stats -->
       <div class="stats-bar">
-        <div v-if="savRequests.length > 0" class="stat-item stat-item--requests">
-          <FontAwesomeIcon :icon="['fas', 'inbox']" />
-          <span class="stat-item__value">{{ savRequests.length }}</span>
-          <span class="stat-item__label">Demandes SAV</span>
-        </div>
         <div class="stat-item stat-item--warning">
           <FontAwesomeIcon :icon="['fas', 'heart-pulse']" />
           <span class="stat-item__value">{{ total }}</span>
           <span class="stat-item__label">Batteries en SAV</span>
         </div>
       </div>
-
-      <!-- Section Demandes SAV (requêtes prestataires) -->
-      <section v-if="savRequests.length > 0" class="sav-section">
-        <div class="sav-section__header">
-          <div>
-            <h2 class="sav-section__title">
-              <FontAwesomeIcon :icon="['fas', 'inbox']" />
-              Demandes SAV
-            </h2>
-            <p class="sav-section__subtitle">Requêtes envoyées par les prestataires</p>
-          </div>
-          <ExportExcelButton
-            :fetchFn="fetchRequestsForExport"
-            filename="demandes_sav"
-            label="Exporter"
-            :columns="exportRequestsColumns"
-          />
-        </div>
-
-        <ul class="battery-grid">
-          <BatteryCard
-            v-for="r in savRequests"
-            :key="r._id"
-            :battery="{ NumeroSerie: r.batterySerial }"
-          >
-            <template #details>
-              <li class="detail-row">
-                <span class="detail-label">Prestataire</span>
-                <span>{{ r.requestedBy?.username || 'Inconnu' }}</span>
-              </li>
-              <li class="detail-row">
-                <span class="detail-label">Date demande</span>
-                <span>{{ formatDate(r.requestedAt) }}</span>
-              </li>
-              <li class="detail-motif">
-                <span class="detail-label">Motif</span>
-                <span class="detail-motif__content">{{ r.reason }}</span>
-              </li>
-            </template>
-          </BatteryCard>
-        </ul>
-      </section>
 
       <!-- Section Batteries en SAV (en cours de traitement) -->
       <section class="sav-section">
@@ -118,14 +71,12 @@
 import { ref, onMounted } from 'vue'
 // Services API
 import { getSavBatteries } from '@/services/batteries.js'
-import { getSavRequests } from '@/services/sav.js'
 // Utils, Logique métier
 import {
   getSavStatusText,
   getSavStatusVariant,
   getDaysSinceSavArrival,
 } from '@/utils/batteryHelpers.js'
-import { formatDate } from '@/utils/formatDate.js'
 // Composants UI
 import BatteryCard from '@/components/batteries/BatteryCard.vue'
 import CustomTag from '@/components/ui/CustomTag.vue'
@@ -134,7 +85,6 @@ import Loader from '@/components/ui/Loader.vue'
 import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 
 const batteries = ref([])
-const savRequests = ref([])
 const total = ref(0)
 const loading = ref(true)
 const errorMsg = ref('')
@@ -144,12 +94,10 @@ const fetchSavData = async () => {
   try {
     loading.value = true
 
-    const [batteriesRes, requestsRes] = await Promise.all([getSavBatteries(), getSavRequests()])
+    const batteriesRes = await getSavBatteries()
 
     batteries.value = batteriesRes.data
     total.value = batteriesRes.total
-    savRequests.value = requestsRes
-    console.log(savRequests.value)
   } catch (err) {
     console.error('Erreur chargement SAV:', err)
     errorMsg.value = 'Impossible de charger la liste des SAV. Veuillez réessayer plus tard.'
@@ -158,22 +106,9 @@ const fetchSavData = async () => {
   }
 }
 
-function fetchRequestsForExport() {
-  return Promise.resolve(
-    savRequests.value.map((r) => ({ ...r, requestedBy: r.requestedBy?.username || 'Inconnu' })),
-  )
-}
-
 function fetchBatteriesForExport() {
   return Promise.resolve(batteries.value)
 }
-
-const exportRequestsColumns = [
-  { key: 'batterySerial', label: 'N° Série' },
-  { key: 'requestedBy', label: 'Prestataire' },
-  { key: 'requestedAt', label: 'Date demande' },
-  { key: 'reason', label: 'Motif' },
-]
 
 const exportBatteriesColumns = [
   { key: 'NumeroSerie', label: 'N° Série' },
@@ -319,44 +254,6 @@ onMounted(async () => {
     font-size: $font-size-sm;
     color: var(--text-secondary);
     margin: 0;
-  }
-}
-
-// Détails slottés dans BatteryCard
-.detail-row,
-.detail-motif {
-  display: flex;
-  font-size: $font-size-sm;
-  color: var(--text-primary);
-  padding: $spacing-1 0;
-  border-bottom: 1px solid var(--border-light);
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.detail-row {
-  justify-content: space-between;
-  align-items: center;
-}
-
-.detail-label {
-  color: var(--text-secondary);
-  font-size: $font-size-xs;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.detail-motif {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: $spacing-1;
-
-  &__content {
-    font-size: $font-size-xs;
-    color: var(--text-secondary);
-    line-height: 1.4;
   }
 }
 
