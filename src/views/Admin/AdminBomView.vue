@@ -29,7 +29,6 @@
             <th>Emplacement</th>
             <th>Version</th>
             <th>Nb Pièces</th>
-            <th>Garantie</th>
             <th>Statut</th>
             <th>Créée le</th>
             <th>Actions</th>
@@ -47,7 +46,6 @@
             <td data-label="Nb Pièces">
               <span class="parts-count">{{ bom.items.length }}</span>
             </td>
-            <td data-label="Garantie">{{ bom.warrantyDuration }} ans</td>
             <td data-label="Statut">
               <span
                 :class="[
@@ -115,18 +113,6 @@
           <div class="form-group">
             <label for="version">Version</label>
             <input id="version" type="text" v-model="form.version" placeholder="ex: v1" />
-          </div>
-
-          <div class="form-group">
-            <label for="warranty">Durée de garantie (années)</label>
-            <input
-              id="warranty"
-              type="number"
-              v-model.number="form.warrantyDuration"
-              min="1"
-              required
-              placeholder="ex: 2"
-            />
           </div>
 
           <div class="form-group">
@@ -216,7 +202,7 @@ const locations = ref([]) // Liste des entrepôts disponibles
 const isModalOpen = ref(false) // État d'ouverture de la modale de création
 // Liste statique des types de batteries supportés (va être dynamique plus tard)vvv
 // Objet Formulaire pour la création
-const form = ref({ batteryType: '', location: '', version: 'v1', warrantyDuration: 2, items: [] })
+const form = ref({ batteryType: '', location: '', version: 'v1', items: [] })
 const showInactive = ref(false) // Filtre pour afficher/masquer les BOM inactives
 
 const filteredBoms = computed(() => {
@@ -244,7 +230,7 @@ const prepareDeactivate = (bom) => {
  * @description Ouvre la modale avec un formulaire réinitialisé aux valeurs par défaut.
  */
 const openAddModal = () => {
-  form.value = { batteryType: '', location: '', version: 'v1', warrantyDuration: 2, items: [] }
+  form.value = { batteryType: '', location: '', version: 'v1', items: [] }
   isModalOpen.value = true
 }
 const closeModal = () => {

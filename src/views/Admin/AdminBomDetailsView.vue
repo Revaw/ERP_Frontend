@@ -41,10 +41,6 @@
             </span>
           </div>
           <div class="meta-item">
-            <span class="meta-item__label">Garantie</span>
-            <span class="meta-item__value">{{ bom.warrantyDuration }} ans</span>
-          </div>
-          <div class="meta-item">
             <span class="meta-item__label">Créée le</span>
             <span class="meta-item__value meta-item__value--date">{{
               formatDate(bom.createdAt)
@@ -63,16 +59,6 @@
               type="text"
               v-model="editForm.version"
               placeholder="ex: v2"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="editWarranty">Durée de garantie (années)</label>
-            <input
-              id="editWarranty"
-              type="number"
-              v-model.number="editForm.warrantyDuration"
-              min="1"
               required
             />
           </div>
@@ -190,7 +176,7 @@ const toast = useToastStore()
 const bom = ref(null) // Objet BOM chargé depuis l'API
 const isEditing = ref(false) // Mode édition actif/inactif
 // Formulaire d'édition (initialisé vide)
-const editForm = ref({ version: '', warrantyDuration: 0, items: [] })
+const editForm = ref({ version: '', items: [] })
 
 const spareParts = ref([]) // Catalogue complet des pièces
 
@@ -203,7 +189,6 @@ const startEdit = () => {
   isEditing.value = true
   editForm.value = {
     version: '', // La version doit être saisie manuellement (ex: v1 -> v2)
-    warrantyDuration: bom.value.warrantyDuration || 0,
     items: bom.value.items.map((item) => ({
       sparePart: item.sparePart._id,
       sku: item.sparePart.sku,
@@ -225,7 +210,7 @@ const removeItem = (index) => {
  */
 const cancelEdit = () => {
   isEditing.value = false
-  editForm.value = { version: '', warrantyDuration: 0, items: [] }
+  editForm.value = { version: '', items: [] }
 }
 
 // --- LOGIQUE MÉTIER ---
@@ -263,7 +248,6 @@ const submitEdit = async () => {
     // Construction du payload pour l'API
     const payload = {
       version: editForm.value.version,
-      warrantyDuration: editForm.value.warrantyDuration,
       items: editForm.value.items.map((i) => ({ sparePart: i.sparePart, quantity: i.quantity })),
     }
     const newBom = await replaceBOM(bom.value._id, payload)
