@@ -139,13 +139,28 @@
         </div>
 
         <div class="form-group">
-          <label for="tenantId">Tenant ID <small class="form-hint-inline">(ex: monabee — laisser vide pour les ERP users)</small></label>
-          <input
-            id="tenantId"
-            type="text"
-            v-model="form.tenantId"
-            placeholder="Ex: monabee"
-          />
+          <label for="tenantId">Client (tenant) <small class="form-hint-inline">— Revaw pour les comptes internes</small></label>
+          <select id="tenantId" v-model="form.tenantId">
+            <option value="">Revaw (interne)</option>
+            <!-- Inactifs listés mais non sélectionnables, SAUF s'ils sont la
+                 valeur courante du compte (rester rattaché doit être possible) -->
+            <option
+              v-for="c in clientsList"
+              :key="c.slug"
+              :value="c.slug"
+              :disabled="!c.isActive && form.tenantId !== c.slug"
+            >
+              {{ c.nom }} ({{ c.slug }}){{ c.isActive ? '' : ' — inactif' }}
+            </option>
+            <!-- Valeur héritée absente du référentiel (ancien tenant libre) -->
+            <option v-if="isLegacyTenant" :value="form.tenantId">
+              {{ form.tenantId }} — hors référentiel
+            </option>
+          </select>
+          <small class="form-hint-inline">
+            Un compte client ne voit que les devices de son tenant. La liste vient du
+            référentiel Clients.
+          </small>
         </div>
 
         <div class="form-group" v-if="isEditing">
@@ -192,10 +207,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 //store
 import { useToastStore } from '@/stores/toast'
 // --- SERVICES ---
 import { getAllUsers, createUser, updateUser, deactivateUser, reactivateUser } from '@/services/users.js'
+import { getAllClients } from '@/services/clients.js'
 // --- UTILS ---
 import { formatDate } from '@/utils/formatDate.js'
 // --- COMPOSANTS UI ---
@@ -356,7 +373,35 @@ const saveForm = async () => {
   }
 }
 
-onMounted(loadUsers)
+// Clients du référentiel (choix de tenant) — tous, les inactifs étant
+// désélectionnables dans le select sauf comme valeur courante.
+const clientsList = ref([])
+const route = useRoute()
+const router = useRouter()
+
+// Tenant hérité d'avant le référentiel : présent sur le compte mais inconnu
+// de la liste — on l'injecte dans le select pour qu'il reste visible.
+const isLegacyTenant = computed(
+  () => form.value.tenantId && !clientsList.value.some((c) => c.slug === form.value.tenantId),
+)
+
+onMounted(async () => {
+  await loadUsers()
+  try {
+    clientsList.value = await getAllClients()
+  } catch {
+    toast.error('Erreur chargement du référentiel clients')
+  }
+  // Arrivée depuis une fiche client ("Créer un compte d'accès") :
+  // ouvre la modale pré-remplie avec le tenant et le rôle prestataire.
+  // La query est ensuite retirée de l'URL pour qu'un F5 ne rouvre pas la modale.
+  if (route.query.create === '1') {
+    openAddModal()
+    form.value.tenantId = route.query.tenant || ''
+    form.value.role = 'external_provider'
+    router.replace({ query: {} })
+  }
+})
 </script>
 
 <style lang="scss" scoped>

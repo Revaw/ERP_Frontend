@@ -69,6 +69,12 @@
     </div>
     <!-- MODAL MAIL -->
     <Modal :isOpen="isMailModalOpen" title="Mail de fin de mois" @close="closeMailModal">
+      <!-- Choix du mois : permet de générer le mail rétroactivement
+           (ex: le 1er du mois pour le mois précédent) -->
+      <div class="mail-period">
+        <label for="mailMonth">Mois du récapitulatif</label>
+        <input id="mailMonth" type="month" v-model="selectedMonth" @change="generateMail" />
+      </div>
       <pre class="mail-content">{{ mailContent }}</pre>
       <p v-if="copied" class="copied-msg">
         <FontAwesomeIcon :icon="['fas', 'circle-check']" />
@@ -130,23 +136,29 @@ const monthNames = [
   'Décembre',
 ]
 
+// Mois sélectionné pour le récapitulatif, au format "AAAA-MM" (input type=month).
+// Permet de générer le mail rétroactivement (ex: le 1er du mois pour le mois d'avant).
+const selectedMonth = ref('')
+
 /**
- * @description Prépare et ouvre la modale du mail de fin de mois.
- * 1. Appelle l'API pour récupérer les expéditions du mois.
- * 2. Formate les données (Numéro de série + Date).
- * 3. Construit le template du mail avec les données dynamiques.
- * 4. Affiche la modale.
+ * @description Génère le contenu du mail pour le mois sélectionné.
+ * Appelle l'API avec month/year, formate la liste et construit le template.
+ * @returns {Promise<boolean>} true si le contenu a été généré
  */
-const openMailModal = async () => {
+const generateMail = async () => {
+  // Champ vidé au clavier (possible sur input type=month) : on ne régénère
+  // pas — sinon le backend retomberait silencieusement sur le mois courant.
+  if (!selectedMonth.value) return false
   try {
-    const data = await getMonthlyExpeditions()
+    const [year, month] = selectedMonth.value.split('-').map(Number)
+    const data = await getMonthlyExpeditions(month, year)
     const monthName = monthNames[data.month - 1]
     const batteriesList = data.data
       .map((b) => `${b.NumeroSerie}    ${formatDate(b.TimestampExpedition)}`)
       .join('\n')
     mailContent.value = `Bonjour,
 
-Veuillez trouver ci-dessous le récapitulatif des batteries qui ont été expédiées au cours du mois de ${monthName}, soit ${data.total} envois sur la période :
+Veuillez trouver ci-dessous le récapitulatif des batteries qui ont été expédiées au cours du mois de ${monthName} ${data.year}, soit ${data.total} envois sur la période :
 
 Vous y trouverez les dates de départ ainsi que les numéros de série correspondants pour chaque unité.
 ${batteriesList}
@@ -155,11 +167,24 @@ Bonne réception.
 
 Cordialement, L'équipe REVAW`
 
-    isMailModalOpen.value = true
     copied.value = false
+    return true
   } catch {
     toast.error('Erreur lors de la récupération des données')
+    return false
   }
+}
+
+/**
+ * @description Ouvre la modale du mail, initialisée sur le mois courant.
+ * Le sélecteur de mois permet ensuite de changer la période (rétroactif).
+ * La modale ne s'ouvre pas si la génération a échoué (pas de mail vide).
+ */
+const openMailModal = async () => {
+  const now = new Date()
+  selectedMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const ok = await generateMail()
+  if (ok) isMailModalOpen.value = true
 }
 
 // Ferme la modale
@@ -316,5 +341,27 @@ onMounted(async () => {
   font-weight: $font-weight-medium;
   margin-top: $spacing-3;
   font-size: $font-size-sm;
+}
+
+.mail-period {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+  }
+
+  input[type='month'] {
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid var(--border-default);
+    border-radius: $radius-md;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: $font-size-sm;
+  }
 }
 </style>

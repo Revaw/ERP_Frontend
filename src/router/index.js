@@ -20,6 +20,8 @@ import ModelesVersionsView from '@/views/Admin/ModelesVersionsView.vue'
 import AdminModeleDetailsView from '@/views/Admin/AdminModeleDetailsView.vue'
 import InventoryView from '@/views/Spare-parts/InventoryView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
+import AdminClientsView from '@/views/Admin/AdminClientsView.vue'
+import AdminClientDetailsView from '@/views/Admin/AdminClientDetailsView.vue'
 import VersionsView from '@/views/Admin/VersionsView.vue'
 import DevicesView from '@/views/DevicesView.vue'
 import PendingDevicesView from '@/views/PendingDevicesView.vue'
@@ -134,6 +136,18 @@ const router = createRouter({
       path: '/admin/users',
       name: 'admin-users',
       component: AdminUsersView,
+      meta: { roles: ['superadmin'] },
+    },
+    {
+      path: '/admin/clients',
+      name: 'admin-clients',
+      component: AdminClientsView,
+      meta: { roles: ['superadmin'] },
+    },
+    {
+      path: '/admin/clients/:slug',
+      name: 'admin-client-details',
+      component: AdminClientDetailsView,
       meta: { roles: ['superadmin'] },
     },
     {
