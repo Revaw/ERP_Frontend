@@ -52,6 +52,13 @@
         </div>
         <span class="quick-nav__label">Modèles & versions</span>
       </RouterLink>
+      <!-- Clients (consultation ouverte à tous, édition superadmin) -->
+      <RouterLink to="/admin/clients" class="quick-nav__item">
+        <div class="quick-nav__icon quick-nav__icon--green">
+          <FontAwesomeIcon :icon="['fas', 'handshake']" />
+        </div>
+        <span class="quick-nav__label">Clients</span>
+      </RouterLink>
       <!-- Statistiques -->
       <RouterLink to="/stats" class="quick-nav__item">
         <div class="quick-nav__icon quick-nav__icon--purple">
