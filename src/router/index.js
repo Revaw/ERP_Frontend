@@ -138,17 +138,17 @@ const router = createRouter({
       component: AdminUsersView,
       meta: { roles: ['superadmin'] },
     },
+    // Clients : consultation ouverte à tous les utilisateurs ERP ;
+    // l'édition est masquée dans les vues et verrouillée côté backend (superadmin)
     {
       path: '/admin/clients',
       name: 'admin-clients',
       component: AdminClientsView,
-      meta: { roles: ['superadmin'] },
     },
     {
       path: '/admin/clients/:slug',
       name: 'admin-client-details',
       component: AdminClientDetailsView,
-      meta: { roles: ['superadmin'] },
     },
     {
       path: '/admin/versions',

@@ -23,7 +23,7 @@
             />
             <h2 v-else class="identity__nom">{{ client.nom }}</h2>
             <button
-              v-if="!isEditingNom"
+              v-if="!isEditingNom && authStore.isSuperAdmin"
               class="btn-icon"
               title="Renommer (le slug, lui, est définitif)"
               @click="startEditNom"
@@ -49,14 +49,18 @@
               {{ client.isActive ? 'Actif' : 'Inactif' }}
             </span>
             <button
-              v-if="client.isActive"
+              v-if="client.isActive && authStore.isSuperAdmin"
               class="btn-icon btn-icon--danger"
               title="Désactiver le client"
               @click="isConfirmModalOpen = true"
             >
               <FontAwesomeIcon :icon="['fas', 'ban']" />
             </button>
-            <button v-else class="btn-secondary btn--sm" @click="toggleActive(true)">
+            <button
+              v-else-if="!client.isActive && authStore.isSuperAdmin"
+              class="btn-secondary btn--sm"
+              @click="toggleActive(true)"
+            >
               <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
               Réactiver
             </button>
@@ -78,7 +82,11 @@
               expédiées (effet rétroactif).
             </p>
           </div>
-          <button v-if="!isEditingModeles" class="btn-primary btn--sm" @click="startEditModeles">
+          <button
+            v-if="!isEditingModeles && authStore.isSuperAdmin"
+            class="btn-primary btn--sm"
+            @click="startEditModeles"
+          >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
             Modifier
           </button>
@@ -155,7 +163,11 @@
             </h3>
             <p class="card__subtitle">Interlocuteurs chez ce client (commercial, SAV, compta...)</p>
           </div>
-          <button v-if="!isEditingContacts" class="btn-primary btn--sm" @click="startEditContacts">
+          <button
+            v-if="!isEditingContacts && authStore.isSuperAdmin"
+            class="btn-primary btn--sm"
+            @click="startEditContacts"
+          >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
             Modifier
           </button>
@@ -228,7 +240,11 @@
             </h3>
             <p class="card__subtitle">Plusieurs possibles — un nom court pour les distinguer</p>
           </div>
-          <button v-if="!isEditingAdresses" class="btn-primary btn--sm" @click="startEditAdresses">
+          <button
+            v-if="!isEditingAdresses && authStore.isSuperAdmin"
+            class="btn-primary btn--sm"
+            @click="startEditAdresses"
+          >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
             Modifier
           </button>
@@ -278,7 +294,11 @@
               Notes
             </h3>
           </div>
-          <button v-if="!isEditingNotes" class="btn-primary btn--sm" @click="startEditNotes">
+          <button
+            v-if="!isEditingNotes && authStore.isSuperAdmin"
+            class="btn-primary btn--sm"
+            @click="startEditNotes"
+          >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
             Modifier
           </button>
@@ -301,8 +321,8 @@
         <p v-else class="empty-state">Aucune note.</p>
       </div>
 
-      <!-- Comptes d'accès -->
-      <div class="card">
+      <!-- Comptes d'accès (gestion des utilisateurs = superadmin, backend verrouillé) -->
+      <div v-if="authStore.isSuperAdmin" class="card">
         <div class="card__header">
           <div>
             <h3 class="card__title">
@@ -383,6 +403,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 //store
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth'
 // Services API
 import { getClientBySlug, updateClient, getClientAccounts } from '@/services/clients.js'
 import { getAllModeles } from '@/services/modele.js'
@@ -396,6 +417,7 @@ import Modal from '@/components/ui/Modal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 // --- ÉTAT ---
 const client = ref(null)
@@ -422,10 +444,13 @@ const load = async () => {
     toast.error('Erreur chargement de la fiche client')
     return
   }
-  try {
-    accounts.value = await getClientAccounts(slug)
-  } catch {
-    toast.error('Comptes rattachés indisponibles')
+  // Comptes rattachés : section superadmin uniquement (route verrouillée backend)
+  if (authStore.isSuperAdmin) {
+    try {
+      accounts.value = await getClientAccounts(slug)
+    } catch {
+      toast.error('Comptes rattachés indisponibles')
+    }
   }
   try {
     // includeInactive : une condition peut pointer vers un modèle désactivé

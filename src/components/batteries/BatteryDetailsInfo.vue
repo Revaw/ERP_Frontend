@@ -85,8 +85,9 @@
           <div class="info-row">
             <span class="info-row__label">Client</span>
             <!-- Écrit par l'atelier à l'expédition — vide avant, ou pour une sortie interne -->
+            <!-- Fiche client consultable par tous les utilisateurs ERP -->
             <RouterLink
-              v-if="battery.client && authStore.isSuperAdmin"
+              v-if="battery.client"
               :to="`/admin/clients/${encodeURIComponent(battery.client)}`"
               class="info-row__link"
               title="Voir la fiche client"
