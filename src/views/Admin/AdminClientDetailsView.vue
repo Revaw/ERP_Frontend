@@ -3,7 +3,7 @@
     <div class="page__header">
       <div>
         <h1 class="page__title">Fiche client</h1>
-        <p class="page__subtitle">Identité, conditions commerciales et comptes d'accès</p>
+        <p class="page__subtitle">Identité, conditions commerciales, contacts et livraison</p>
       </div>
       <ButtonBack />
     </div>
@@ -30,7 +30,9 @@
             >
               <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
             </button>
-            <template v-else>
+            <!-- v-else-if (pas v-else) : sinon ces boutons s'affichent
+                 en permanence pour les non-superadmin -->
+            <template v-else-if="isEditingNom">
               <button class="btn-icon" title="Valider" @click="saveNom">
                 <FontAwesomeIcon :icon="['fas', 'check']" />
               </button>
@@ -369,6 +371,14 @@
       </div>
     </div>
 
+    <div v-else-if="loadError" class="error-state">
+      <FontAwesomeIcon :icon="['fas', 'circle-exclamation']" />
+      <p>{{ loadError }}</p>
+      <RouterLink to="/admin/clients" class="btn-secondary btn--sm">
+        Retour à la liste des clients
+      </RouterLink>
+    </div>
+
     <div v-else class="loading-state">
       <Loader />
       <p>Chargement de la fiche client...</p>
@@ -436,12 +446,19 @@ const modelesDraft = ref([])
 // --- CHARGEMENT ---
 // La fiche d'abord (bloquante), puis comptes et référentiel modèles en
 // dégradé : un échec secondaire ne doit pas laisser la page sur le loader.
+const loadError = ref('')
+
 const load = async () => {
   const slug = route.params.slug
   try {
     client.value = await getClientBySlug(slug)
-  } catch {
-    toast.error('Erreur chargement de la fiche client')
+  } catch (err) {
+    // État d'erreur affiché à la place du loader (sinon spinner infini) —
+    // atteignable par tous via le lien Client d'une batterie au slug inconnu
+    loadError.value =
+      err.response?.status === 404
+        ? `Aucun client "${slug}" dans le référentiel. Si c'est un client réel, sa fiche reste à créer.`
+        : 'Erreur de chargement de la fiche client.'
     return
   }
   // Comptes rattachés : section superadmin uniquement (route verrouillée backend)
@@ -538,8 +555,20 @@ const saveContacts = async () => {
   if (contactsDraft.value.some((c) => !c.nom?.trim())) {
     return toast.error('Chaque contact doit avoir un nom (ou supprimer les lignes vides).')
   }
+  // Format email vérifié ici : le bouton Enregistrer est hors <form>,
+  // la validation navigateur de type=email ne se déclenche donc jamais
+  if (contactsDraft.value.some((c) => c.email?.trim() && !/^\S+@\S+\.\S+$/.test(c.email.trim()))) {
+    return toast.error('Un des emails est invalide.')
+  }
+  // Normalise : champs optionnels vides → null (pas de chaînes vides en base)
+  const payload = contactsDraft.value.map((c) => ({
+    nom: c.nom.trim(),
+    role: c.role?.trim() || null,
+    email: c.email?.trim() || null,
+    tel: c.tel?.trim() || null,
+  }))
   try {
-    client.value = await updateClient(client.value.slug, { contacts: contactsDraft.value })
+    client.value = await updateClient(client.value.slug, { contacts: payload })
     isEditingContacts.value = false
     toast.success('Contacts enregistrés')
   } catch (err) {
@@ -804,13 +833,19 @@ onMounted(load)
   font-size: $font-size-sm;
 }
 
-.loading-state {
+.loading-state,
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: $spacing-3;
   padding: $spacing-8;
   color: var(--text-secondary);
+}
+
+.error-state svg {
+  font-size: $font-size-2xl;
+  color: var(--color-error);
 }
 
 .info-link {
