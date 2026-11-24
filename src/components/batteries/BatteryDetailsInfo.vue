@@ -297,7 +297,6 @@ import {
 } from '@/services/batteries'
 import { saveIntervention, getActiveIntervention } from '@/services/sav'
 import { getAllSpareParts } from '@/services/spareParts'
-import { getActiveBOMByType } from '@/services/bom'
 import { getAllVersions } from '@/services/versions'
 // Composants UI
 import CustomTag from '../ui/CustomTag.vue'
@@ -331,7 +330,9 @@ const hasSav = computed(() => battery.value?.sav_status === true)
 
 const spareParts = ref([]) // Liste complète du catalogue de pièces (pour le select)
 const activeIntervention = ref(null) // Stocke les données techniques (SavIntervention)
-const warrantyDuration = ref(null) // Durée de garantie de la batterie en années
+// Durée de garantie (années) : résolue par le backend via le référentiel
+// clients (battery.client × battery.modele) et renvoyée avec la batterie.
+const warrantyDuration = computed(() => battery.value?.garantieAns ?? null)
 
 const isEditingSav = ref(false)
 
@@ -379,9 +380,10 @@ const executeConfirm = async () => {
 
 // --- LOGIQUE GARANTIE ---
 /**
- * @description Calcule la date de fin de garantie.
- * Formule : Date d'expédition + Durée garantie (BOM).
- * Retourne '-' si la batterie n'est pas expédiée ou si la BOM n'est pas chargée.
+ * @description Calcule la date de fin de garantie (affichage uniquement).
+ * Formule : Date d'expédition + garantieAns (résolu par le backend via le
+ * référentiel clients). Retourne '-' si non expédiée ou garantie inconnue
+ * (condition commerciale non renseignée sur la fiche client).
  */
 const warrantyEndDate = computed(() => {
   const expDateStr = battery.value?.TimestampExpedition
@@ -399,8 +401,8 @@ const warrantyEndDate = computed(() => {
 // --- LOGIQUE API ---
 /**
  * @description Récupère les données "métier" qui ne sont pas dans le flux CSV logistique.
- * 1. L'intervention SAV technique (Motif, Pièces changées, Statut réel).
- * 2. La BOM active pour déterminer la durée de garantie selon le type (A, B...).
+ * L'intervention SAV technique (Motif, Pièces changées, Statut réel).
+ * (La garantie, elle, arrive déjà résolue avec la batterie — plus de fetch BOM.)
  */
 const fetchTechnicalDetails = async () => {
   // Pas de requête si pas de numéro de série
@@ -411,18 +413,6 @@ const fetchTechnicalDetails = async () => {
     activeIntervention.value = await getActiveIntervention(battery.value.NumeroSerie)
   } catch {
     // Silencieux : pas de toast car donnée secondaire, l'UI reste fonctionnelle
-  }
-
-  // Charger la BOM pour avoir la garantie
-  if (battery.value?.type) {
-    try {
-      const bom = await getActiveBOMByType(battery.value.type)
-      if (bom && bom.warrantyDuration) {
-        warrantyDuration.value = bom.warrantyDuration
-      }
-    } catch {
-      // Silencieux : pas de toast car donnée secondaire, l'UI reste fonctionnelle
-    }
   }
 }
 
