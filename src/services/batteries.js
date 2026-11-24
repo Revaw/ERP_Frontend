@@ -108,9 +108,15 @@ export async function addOrUpdateCommentary(serial, data) {
 }
 
 // Recupere les expéditions mensuelles
-export async function getMonthlyExpeditions() {
+/**
+ * Expéditions d'un mois donné (mail de fin de mois).
+ * @param {number} [month] - 1-12, défaut : mois courant côté backend
+ * @param {number} [year]  - défaut : année courante côté backend
+ */
+export async function getMonthlyExpeditions(month, year) {
   try {
-    const res = await axios.get(`${API_URL}/monthly-expeditions`)
+    const params = month && year ? `?month=${month}&year=${year}` : ''
+    const res = await axios.get(`${API_URL}/monthly-expeditions${params}`)
     return res.data
   } catch (err) {
     console.error('Erreur API getMonthlyExpeditions:', err)
