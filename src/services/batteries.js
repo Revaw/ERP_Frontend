@@ -48,6 +48,7 @@ export async function getBatteriesPaginated(page = 1, limit = 100, filters = {})
     if (filters.isInTest !== undefined) params.append('isInTest', filters.isInTest)
     if (filters.kwh) params.append('kwh', filters.kwh)
     if (filters.serial) params.append('serial', filters.serial)
+    if (filters.client) params.append('client', filters.client)
 
     const response = await axios.get(`${API_URL}?${params.toString()}`)
     return response.data

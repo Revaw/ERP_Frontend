@@ -83,6 +83,19 @@
             <span class="info-row__value">{{ battery.type }}</span>
           </div>
           <div class="info-row">
+            <span class="info-row__label">Client</span>
+            <!-- Écrit par l'atelier à l'expédition — vide avant, ou pour une sortie interne -->
+            <RouterLink
+              v-if="battery.client && authStore.isSuperAdmin"
+              :to="`/admin/clients/${battery.client}`"
+              class="info-row__link"
+              title="Voir la fiche client"
+            >
+              {{ battery.client }}
+            </RouterLink>
+            <span v-else class="info-row__value">{{ battery.client || '—' }}</span>
+          </div>
+          <div class="info-row">
             <span class="info-row__label">Capacité</span>
             <span class="info-row__value">{{ batteryCapacity || 'Non renseigné' }}</span>
           </div>

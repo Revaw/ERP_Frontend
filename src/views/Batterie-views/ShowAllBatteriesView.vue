@@ -14,10 +14,6 @@
             <FontAwesomeIcon :icon="['fas', 'rotate-left']" />
             Réinitialiser
           </button>
-          <button class="btn-secondary" @click="openMonabeePortal">
-            <FontAwesomeIcon :icon="['fas', 'globe']" />
-            Portail Monabee
-          </button>
           <ExportExcelButton
             :fetchFn="fetchForExport"
             filename="batteries"
@@ -90,6 +86,18 @@
         </div>
 
         <div class="filters-group">
+          <span class="filters-group__label">Client</span>
+          <div class="form-group form-group--inline">
+            <select v-model="filters.client">
+              <option value="">Tous les clients</option>
+              <option v-for="c in clientsList" :key="c.slug" :value="c.slug">
+                {{ c.nom }} ({{ c.slug }})
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filters-group">
           <span class="filters-group__label">N° Série</span>
           <div class="form-group form-group--inline">
             <input type="text" v-model="filters.serial" placeholder="ex: 458" />
@@ -141,7 +149,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isTauri } from '@/utils/tauri'
 // Composants UI
 import BatteryCard from '@/components/batteries/BatteryCard.vue'
 import CustomTag from '@/components/ui/CustomTag.vue'
@@ -151,6 +158,7 @@ import Loader from '@/components/ui/Loader.vue'
 import ExportExcelButton from '@/components/ui/ExportExcelButton.vue'
 // Services & Utils
 import { getBatteriesPaginated } from '@/services/batteries.js'
+import { getAllClients } from '@/services/clients.js'
 import { getStatusText, getStatusVariant, getBatteryKwh } from '@/utils/batteryHelpers.js'
 
 // --- DONNÉES & PAGINATION ---
@@ -177,6 +185,7 @@ const DEFAULT_FILTERS = {
   startDate: null, // Date début (Filtre sur date expédition)
   endDate: null, // Date fin
   kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8.4)
+  client: '', // Sélecteur : Filtrage par client (slug du référentiel)
   serial: '', // Recherche par numéro de série
 }
 
@@ -194,6 +203,7 @@ function filtersFromQuery(query) {
     startDate: query.startDate || DEFAULT_FILTERS.startDate,
     endDate: query.endDate || DEFAULT_FILTERS.endDate,
     kwh: query.kwh || DEFAULT_FILTERS.kwh,
+    client: query.client || DEFAULT_FILTERS.client,
     serial: query.serial || DEFAULT_FILTERS.serial,
   }
 }
@@ -271,6 +281,7 @@ function deselectAllStatuses() {
 // --- EXPORT EXCEL ---
 const exportColumns = [
   { key: 'NumeroSerie', label: 'N° Série' },
+  { key: 'client', label: 'Client' },
   { key: 'version', label: 'Version firmware' },
   { key: 'TimestampImpression', label: 'Date création' },
   { key: 'TimestampTestDone', label: 'Date mise en stock' },
@@ -285,19 +296,18 @@ async function fetchForExport() {
   return res.data
 }
 
+// Clients du référentiel (alimente le select du filtre).
+// Actifs ET inactifs : des batteries peuvent appartenir à un client désactivé.
+const clientsList = ref([])
+
 onMounted(async () => {
   await loadPage(1)
-})
-
-const openMonabeePortal = async () => {
-  const url = 'https://batteries-portal.onrender.com/'
-  if (isTauri()) {
-    const { open } = await import('@tauri-apps/plugin-shell')
-    open(url)
-  } else {
-    window.open(url, '_blank')
+  try {
+    clientsList.value = await getAllClients()
+  } catch {
+    // Silencieux : le filtre reste vide, la liste fonctionne sans lui
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>
