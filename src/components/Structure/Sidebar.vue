@@ -55,10 +55,16 @@
         </li>
         <li v-if="authStore.isSuperAdmin">
           <RouterLink
-            to="/admin/users"
+            to="/admin/clients"
             class="sidebar__link sidebar__link--admin"
             @click="closeMobile"
           >
+            <FontAwesomeIcon class="sidebar__icon" :icon="['fas', 'handshake']" />
+            <span>Clients</span>
+          </RouterLink>
+        </li>
+        <li v-if="authStore.isSuperAdmin">
+          <RouterLink to="/admin/users" class="sidebar__link" @click="closeMobile">
             <FontAwesomeIcon class="sidebar__icon" :icon="['fas', 'users-gear']" />
             <span>Gestion Utilisateurs</span>
           </RouterLink>

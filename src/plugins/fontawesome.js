@@ -55,6 +55,7 @@ import {
   faGear,
   faBoxArchive,
   faInbox,
+  faHandshake,
 
   // Modèles de batterie (fiches passeport)
   faLock,
@@ -140,6 +141,7 @@ library.add(
   faGear,
   faBoxArchive,
   faInbox,
+  faHandshake,
 
   // Modèles de batterie (fiches passeport)
   faLock,

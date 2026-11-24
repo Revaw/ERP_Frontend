@@ -139,13 +139,17 @@
         </div>
 
         <div class="form-group">
-          <label for="tenantId">Tenant ID <small class="form-hint-inline">(ex: monabee — laisser vide pour les ERP users)</small></label>
-          <input
-            id="tenantId"
-            type="text"
-            v-model="form.tenantId"
-            placeholder="Ex: monabee"
-          />
+          <label for="tenantId">Client (tenant) <small class="form-hint-inline">— Revaw pour les comptes internes</small></label>
+          <select id="tenantId" v-model="form.tenantId">
+            <option value="">Revaw (interne)</option>
+            <option v-for="c in clientsList" :key="c.slug" :value="c.slug">
+              {{ c.nom }} ({{ c.slug }})
+            </option>
+          </select>
+          <small class="form-hint-inline">
+            Un compte client ne voit que les devices de son tenant. La liste vient du
+            référentiel Clients.
+          </small>
         </div>
 
         <div class="form-group" v-if="isEditing">
@@ -192,10 +196,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 //store
 import { useToastStore } from '@/stores/toast'
 // --- SERVICES ---
 import { getAllUsers, createUser, updateUser, deactivateUser, reactivateUser } from '@/services/users.js'
+import { getAllClients } from '@/services/clients.js'
 // --- UTILS ---
 import { formatDate } from '@/utils/formatDate.js'
 // --- COMPOSANTS UI ---
@@ -356,7 +362,25 @@ const saveForm = async () => {
   }
 }
 
-onMounted(loadUsers)
+// Clients actifs du référentiel (choix de tenant à la création de compte)
+const clientsList = ref([])
+const route = useRoute()
+
+onMounted(async () => {
+  await loadUsers()
+  try {
+    clientsList.value = (await getAllClients()).filter((c) => c.isActive)
+  } catch {
+    toast.error('Erreur chargement du référentiel clients')
+  }
+  // Arrivée depuis une fiche client ("Créer un compte d'accès") :
+  // ouvre la modale pré-remplie avec le tenant et le rôle prestataire
+  if (route.query.create === '1') {
+    openAddModal()
+    form.value.tenantId = route.query.tenant || ''
+    form.value.role = 'external_provider'
+  }
+})
 </script>
 
 <style lang="scss" scoped>
