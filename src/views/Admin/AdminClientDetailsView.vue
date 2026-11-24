@@ -97,8 +97,13 @@
               <td data-label="Modèle">
                 <select v-if="isEditingModeles" v-model="item.modele" required>
                   <option value="" disabled>-- Choisir un modèle --</option>
-                  <option v-for="m in modelesReferentiel" :key="m.nom" :value="m.nom">
-                    {{ m.nom }} ({{ m.capaciteKwh }} kWh)
+                  <option
+                    v-for="m in modelesReferentiel"
+                    :key="m.nom"
+                    :value="m.nom"
+                    :disabled="m.isActive === false && item.modele !== m.nom"
+                  >
+                    {{ m.nom }} ({{ m.capaciteKwh }} kWh){{ m.isActive === false ? ' — inactif' : '' }}
                   </option>
                 </select>
                 <span v-else class="modele-name">{{ item.modele }}</span>
@@ -153,7 +158,8 @@
               MultiBat, limité à ses devices. Un client peut exister sans aucun compte.
             </p>
           </div>
-          <button class="btn-primary btn--sm" @click="goCreateAccount">
+          <!-- Masqué si client inactif : le backend refuse un compte sur un tenant inactif -->
+          <button v-if="client.isActive" class="btn-primary btn--sm" @click="goCreateAccount">
             <FontAwesomeIcon :icon="['fas', 'user-plus']" />
             Créer un compte d'accès
           </button>
@@ -250,19 +256,27 @@ const isEditingModeles = ref(false)
 const modelesDraft = ref([])
 
 // --- CHARGEMENT ---
+// La fiche d'abord (bloquante), puis comptes et référentiel modèles en
+// dégradé : un échec secondaire ne doit pas laisser la page sur le loader.
 const load = async () => {
+  const slug = route.params.slug
   try {
-    const slug = route.params.slug
-    const [clientData, accountsData, modelesData] = await Promise.all([
-      getClientBySlug(slug),
-      getClientAccounts(slug),
-      getAllModeles(),
-    ])
-    client.value = clientData
-    accounts.value = accountsData
-    modelesReferentiel.value = modelesData
+    client.value = await getClientBySlug(slug)
   } catch {
     toast.error('Erreur chargement de la fiche client')
+    return
+  }
+  try {
+    accounts.value = await getClientAccounts(slug)
+  } catch {
+    toast.error('Comptes rattachés indisponibles')
+  }
+  try {
+    // includeInactive : une condition peut pointer vers un modèle désactivé
+    // depuis — il doit rester visible dans le select en édition.
+    modelesReferentiel.value = await getAllModeles(true)
+  } catch {
+    toast.error('Référentiel modèles indisponible')
   }
 }
 

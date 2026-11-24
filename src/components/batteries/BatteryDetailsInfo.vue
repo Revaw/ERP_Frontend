@@ -87,7 +87,7 @@
             <!-- Écrit par l'atelier à l'expédition — vide avant, ou pour une sortie interne -->
             <RouterLink
               v-if="battery.client && authStore.isSuperAdmin"
-              :to="`/admin/clients/${battery.client}`"
+              :to="`/admin/clients/${encodeURIComponent(battery.client)}`"
               class="info-row__link"
               title="Voir la fiche client"
             >
@@ -200,7 +200,8 @@
               :class="{ 'info-row__value--success': warrantyEndDate !== '-' }"
             >
               {{ warrantyEndDate }}
-              <small v-if="warrantyDuration">({{ warrantyDuration }} ans)</small>
+              <!-- !== null : une garantie de 0 an est une vraie valeur ("sans garantie") -->
+              <small v-if="warrantyDuration !== null">({{ warrantyDuration }} ans)</small>
             </span>
           </div>
         </div>
@@ -401,7 +402,9 @@ const executeConfirm = async () => {
 const warrantyEndDate = computed(() => {
   const expDateStr = battery.value?.TimestampExpedition
   const duration = warrantyDuration.value
-  if (!expDateStr || !duration) return '-'
+  // duration == null (et pas !duration) : 0 an est une garantie valide,
+  // la date de fin est alors la date d'expédition elle-même.
+  if (!expDateStr || duration == null) return '-'
   const d = new Date(expDateStr)
   if (isNaN(d.getTime())) return '-'
   d.setFullYear(d.getFullYear() + duration)

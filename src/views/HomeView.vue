@@ -143,8 +143,12 @@ const selectedMonth = ref('')
 /**
  * @description Génère le contenu du mail pour le mois sélectionné.
  * Appelle l'API avec month/year, formate la liste et construit le template.
+ * @returns {Promise<boolean>} true si le contenu a été généré
  */
 const generateMail = async () => {
+  // Champ vidé au clavier (possible sur input type=month) : on ne régénère
+  // pas — sinon le backend retomberait silencieusement sur le mois courant.
+  if (!selectedMonth.value) return false
   try {
     const [year, month] = selectedMonth.value.split('-').map(Number)
     const data = await getMonthlyExpeditions(month, year)
@@ -164,20 +168,23 @@ Bonne réception.
 Cordialement, L'équipe REVAW`
 
     copied.value = false
+    return true
   } catch {
     toast.error('Erreur lors de la récupération des données')
+    return false
   }
 }
 
 /**
  * @description Ouvre la modale du mail, initialisée sur le mois courant.
  * Le sélecteur de mois permet ensuite de changer la période (rétroactif).
+ * La modale ne s'ouvre pas si la génération a échoué (pas de mail vide).
  */
 const openMailModal = async () => {
   const now = new Date()
   selectedMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  await generateMail()
-  isMailModalOpen.value = true
+  const ok = await generateMail()
+  if (ok) isMailModalOpen.value = true
 }
 
 // Ferme la modale

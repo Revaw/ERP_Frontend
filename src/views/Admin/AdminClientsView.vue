@@ -151,6 +151,14 @@ const loadClients = async () => {
 }
 
 const saveForm = async () => {
+  // Validation manuelle : le bouton Créer vit dans le footer de la modale,
+  // hors du <form>, donc required/pattern HTML ne s'appliquent pas au clic.
+  if (!/^[a-z0-9-]+$/.test(form.value.slug)) {
+    return toast.error('Slug invalide : minuscules, chiffres et tirets uniquement.')
+  }
+  if (!form.value.nom.trim()) {
+    return toast.error('Le nom d\'affichage est requis.')
+  }
   try {
     const created = await createClient(form.value)
     toast.success(`Client "${created.slug}" créé`)
