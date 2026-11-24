@@ -145,6 +145,162 @@
         </div>
       </div>
 
+      <!-- Contacts -->
+      <div class="card">
+        <div class="card__header">
+          <div>
+            <h3 class="card__title">
+              <FontAwesomeIcon :icon="['fas', 'user']" />
+              Contacts
+            </h3>
+            <p class="card__subtitle">Interlocuteurs chez ce client (commercial, SAV, compta...)</p>
+          </div>
+          <button v-if="!isEditingContacts" class="btn-primary btn--sm" @click="startEditContacts">
+            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+            Modifier
+          </button>
+        </div>
+
+        <table v-if="isEditingContacts || client.contacts?.length" class="data-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Rôle</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th v-if="isEditingContacts"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(c, index) in isEditingContacts ? contactsDraft : client.contacts" :key="index">
+              <td data-label="Nom">
+                <input v-if="isEditingContacts" type="text" v-model="c.nom" placeholder="Nom *" />
+                <span v-else>{{ c.nom }}</span>
+              </td>
+              <td data-label="Rôle">
+                <input v-if="isEditingContacts" type="text" v-model="c.role" placeholder="ex: SAV" />
+                <span v-else>{{ c.role || '—' }}</span>
+              </td>
+              <td data-label="Email">
+                <input v-if="isEditingContacts" type="email" v-model="c.email" placeholder="email" />
+                <a v-else-if="c.email" :href="`mailto:${c.email}`" class="info-link">{{ c.email }}</a>
+                <span v-else>—</span>
+              </td>
+              <td data-label="Téléphone">
+                <input v-if="isEditingContacts" type="tel" v-model="c.tel" placeholder="numéro" />
+                <a v-else-if="c.tel" :href="`tel:${c.tel}`" class="info-link">{{ c.tel }}</a>
+                <span v-else>—</span>
+              </td>
+              <td v-if="isEditingContacts">
+                <button class="btn-icon btn-icon--danger" @click="removeContact(index)">
+                  <FontAwesomeIcon :icon="['fas', 'xmark']" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="!isEditingContacts && !client.contacts?.length" class="empty-state">
+          Aucun contact renseigné.
+        </p>
+
+        <div v-if="isEditingContacts" class="edit-actions">
+          <button class="btn-add" @click="addContact">
+            <FontAwesomeIcon :icon="['fas', 'plus']" />
+            Ajouter contact
+          </button>
+          <div class="edit-actions__buttons">
+            <button class="btn-secondary" @click="isEditingContacts = false">Annuler</button>
+            <button class="btn-primary" @click="saveContacts">
+              <FontAwesomeIcon :icon="['fas', 'check']" />
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Adresses de livraison -->
+      <div class="card">
+        <div class="card__header">
+          <div>
+            <h3 class="card__title">
+              <FontAwesomeIcon :icon="['fas', 'warehouse']" />
+              Adresses de livraison
+            </h3>
+            <p class="card__subtitle">Plusieurs possibles — un nom court pour les distinguer</p>
+          </div>
+          <button v-if="!isEditingAdresses" class="btn-primary btn--sm" @click="startEditAdresses">
+            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+            Modifier
+          </button>
+        </div>
+
+        <template v-if="isEditingAdresses">
+          <div v-for="(a, index) in adressesDraft" :key="index" class="adresse-row">
+            <div class="adresse-row__fields">
+              <input type="text" v-model="a.nom" placeholder="Nom (ex: Entrepôt Lyon) *" />
+              <textarea v-model="a.adresse" rows="3" placeholder="Adresse complète *"></textarea>
+            </div>
+            <button class="btn-icon btn-icon--danger" @click="removeAdresse(index)">
+              <FontAwesomeIcon :icon="['fas', 'xmark']" />
+            </button>
+          </div>
+          <div class="edit-actions">
+            <button class="btn-add" @click="addAdresse">
+              <FontAwesomeIcon :icon="['fas', 'plus']" />
+              Ajouter une adresse
+            </button>
+            <div class="edit-actions__buttons">
+              <button class="btn-secondary" @click="isEditingAdresses = false">Annuler</button>
+              <button class="btn-primary" @click="saveAdresses">
+                <FontAwesomeIcon :icon="['fas', 'check']" />
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div v-for="(a, index) in client.adressesLivraison" :key="index" class="adresse-view">
+            <span class="adresse-view__nom">{{ a.nom }}</span>
+            <p class="adresse-view__texte">{{ a.adresse }}</p>
+          </div>
+          <p v-if="!client.adressesLivraison?.length" class="empty-state">
+            Aucune adresse de livraison renseignée.
+          </p>
+        </template>
+      </div>
+
+      <!-- Notes -->
+      <div class="card">
+        <div class="card__header">
+          <div>
+            <h3 class="card__title">
+              <FontAwesomeIcon :icon="['fas', 'clipboard-list']" />
+              Notes
+            </h3>
+          </div>
+          <button v-if="!isEditingNotes" class="btn-primary btn--sm" @click="startEditNotes">
+            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+            Modifier
+          </button>
+        </div>
+
+        <template v-if="isEditingNotes">
+          <textarea v-model="notesDraft" rows="5" class="notes-textarea" placeholder="Notes libres sur ce client..."></textarea>
+          <div class="edit-actions">
+            <span></span>
+            <div class="edit-actions__buttons">
+              <button class="btn-secondary" @click="isEditingNotes = false">Annuler</button>
+              <button class="btn-primary" @click="saveNotes">
+                <FontAwesomeIcon :icon="['fas', 'check']" />
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </template>
+        <p v-else-if="client.notes" class="notes-view">{{ client.notes }}</p>
+        <p v-else class="empty-state">Aucune note.</p>
+      </div>
+
       <!-- Comptes d'accès -->
       <div class="card">
         <div class="card__header">
@@ -336,6 +492,80 @@ const saveModeles = async () => {
     toast.success('Conditions commerciales enregistrées')
   } catch (err) {
     toast.error(err.response?.data?.message || 'Erreur enregistrement')
+  }
+}
+
+// --- CONTACTS ---
+const isEditingContacts = ref(false)
+const contactsDraft = ref([])
+
+const startEditContacts = () => {
+  contactsDraft.value = (client.value.contacts || []).map((c) => ({ ...c }))
+  isEditingContacts.value = true
+}
+const addContact = () => {
+  contactsDraft.value.push({ nom: '', role: '', email: '', tel: '' })
+}
+const removeContact = (index) => {
+  contactsDraft.value.splice(index, 1)
+}
+const saveContacts = async () => {
+  if (contactsDraft.value.some((c) => !c.nom?.trim())) {
+    return toast.error('Chaque contact doit avoir un nom (ou supprimer les lignes vides).')
+  }
+  try {
+    client.value = await updateClient(client.value.slug, { contacts: contactsDraft.value })
+    isEditingContacts.value = false
+    toast.success('Contacts enregistrés')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Erreur enregistrement contacts')
+  }
+}
+
+// --- ADRESSES DE LIVRAISON ---
+const isEditingAdresses = ref(false)
+const adressesDraft = ref([])
+
+const startEditAdresses = () => {
+  adressesDraft.value = (client.value.adressesLivraison || []).map((a) => ({ ...a }))
+  isEditingAdresses.value = true
+}
+const addAdresse = () => {
+  adressesDraft.value.push({ nom: '', adresse: '' })
+}
+const removeAdresse = (index) => {
+  adressesDraft.value.splice(index, 1)
+}
+const saveAdresses = async () => {
+  if (adressesDraft.value.some((a) => !a.nom?.trim() || !a.adresse?.trim())) {
+    return toast.error('Chaque adresse doit avoir un nom et une adresse (ou supprimer les lignes vides).')
+  }
+  try {
+    client.value = await updateClient(client.value.slug, {
+      adressesLivraison: adressesDraft.value,
+    })
+    isEditingAdresses.value = false
+    toast.success('Adresses enregistrées')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Erreur enregistrement adresses')
+  }
+}
+
+// --- NOTES ---
+const isEditingNotes = ref(false)
+const notesDraft = ref('')
+
+const startEditNotes = () => {
+  notesDraft.value = client.value.notes || ''
+  isEditingNotes.value = true
+}
+const saveNotes = async () => {
+  try {
+    client.value = await updateClient(client.value.slug, { notes: notesDraft.value })
+    isEditingNotes.value = false
+    toast.success('Notes enregistrées')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Erreur enregistrement notes')
   }
 }
 
@@ -556,5 +786,66 @@ onMounted(load)
   gap: $spacing-3;
   padding: $spacing-8;
   color: var(--text-secondary);
+}
+
+.info-link {
+  color: var(--revaw-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Adresses de livraison
+.adresse-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
+  padding-bottom: $spacing-3;
+  border-bottom: 1px solid var(--border-light);
+
+  &__fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+}
+
+.adresse-view {
+  padding: $spacing-3 0;
+  border-bottom: 1px solid var(--border-light);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  &__nom {
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    font-size: $font-size-sm;
+  }
+
+  &__texte {
+    margin: $spacing-1 0 0 0;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    white-space: pre-line;
+  }
+}
+
+// Notes
+.notes-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.notes-view {
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+  white-space: pre-line;
+  margin: 0;
 }
 </style>
