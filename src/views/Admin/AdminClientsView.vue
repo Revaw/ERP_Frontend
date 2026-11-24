@@ -10,7 +10,8 @@
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <button class="btn-primary" @click="openAddModal">
+      <!-- Création réservée superadmin (verrou backend en plus du masquage) -->
+      <button v-if="authStore.isSuperAdmin" class="btn-primary" @click="openAddModal">
         <FontAwesomeIcon :icon="['fas', 'plus']" />
         Créer un client
       </button>
@@ -107,6 +108,7 @@
 import { ref, computed, onMounted } from 'vue'
 //store
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth'
 // Services API
 import { getAllClients, createClient } from '@/services/clients.js'
 // Utils
@@ -116,6 +118,7 @@ import ButtonBack from '@/components/ui/ButtonBack.vue'
 import Modal from '@/components/ui/Modal.vue'
 
 const toast = useToastStore()
+const authStore = useAuthStore()
 
 // --- ÉTAT ---
 const clients = ref([])
