@@ -81,8 +81,13 @@
           {{ section.title }}
         </h3>
         <div class="fields-grid">
-          <div v-for="field in section.fields" :key="field.key" class="field">
+          <div
+            v-for="field in section.fields"
+            :key="field.key"
+            :class="['field', { 'field--wide': field.wide }]"
+          >
             <label :for="field.key">{{ field.label }}</label>
+            <span v-if="field.hint" class="field__hint">{{ field.hint }}</span>
 
             <!-- Mode édition -->
             <template v-if="isEditing">
@@ -106,8 +111,102 @@
                 :id="field.key"
                 type="text"
                 v-model="editForm[field.key]"
-                placeholder="valeurs séparées par des virgules"
+                placeholder="entrée 1 ; entrée 2 — ou « néant »"
               />
+              <select
+                v-else-if="field.type === 'boolean'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option :value="true">Oui</option>
+                <option :value="false">Non</option>
+              </select>
+              <select
+                v-else-if="field.type === 'select'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <select
+                v-else-if="field.type === 'symboles'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option value="aucun">Aucun (vérifié)</option>
+                <option value="Cd">Cd</option>
+                <option value="Pb">Pb</option>
+                <option value="Cd,Pb">Cd et Pb</option>
+              </select>
+              <div v-else-if="field.type === 'lieu'" class="range-inputs">
+                <input type="text" v-model="editForm[field.key].ville" placeholder="ville" />
+                <input type="text" v-model="editForm[field.key].region" placeholder="région" />
+                <input
+                  type="text"
+                  v-model="editForm[field.key].pays"
+                  placeholder="pays (FR)"
+                  maxlength="2"
+                  class="input-pays"
+                />
+              </div>
+              <div v-else-if="field.type === 'recycle'" class="recycle-inputs">
+                <label v-for="mat in RECYCLE_MATERIAUX" :key="mat.key" class="recycle-item">
+                  <span>{{ mat.label }}</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    max="100"
+                    v-model.number="editForm[field.key][mat.key]"
+                    placeholder="%"
+                  />
+                </label>
+              </div>
+              <div v-else-if="field.type === 'powerLimits'" class="power-limits">
+                <div
+                  v-for="(ligne, index) in editForm[field.key]"
+                  :key="index"
+                  class="power-limits__row"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.puissanceW"
+                    placeholder="puissance (W)"
+                  />
+                  <span class="range-sep">entre</span>
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.temperatureC.min"
+                    placeholder="min °C"
+                  />
+                  <span class="range-sep">et</span>
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.temperatureC.max"
+                    placeholder="max °C"
+                  />
+                  <button
+                    type="button"
+                    class="btn-icon-danger"
+                    title="Retirer cette plage"
+                    @click="editForm[field.key].splice(index, 1)"
+                  >
+                    <FontAwesomeIcon :icon="['fas', 'trash']" />
+                  </button>
+                </div>
+                <button type="button" class="btn-secondary btn-add-row" @click="addPowerLimit(field.key)">
+                  <FontAwesomeIcon :icon="['fas', 'plus']" />
+                  Ajouter une plage
+                </button>
+              </div>
               <div v-else-if="field.type === 'range'" class="range-inputs">
                 <input
                   type="number"
@@ -217,10 +316,22 @@ const sections = [
     title: 'Identité',
     icon: 'id-card',
     fields: [
-      { key: 'fabricant', label: 'Fabricant', type: 'text' },
-      { key: 'categorie', label: 'Catégorie de batterie', type: 'text' },
-      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'text' },
-      { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4' },
+      // (pas de fabricant : donnée d'entreprise, portée par le back du passeport)
+      { key: 'categorie', label: 'Catégorie de batterie', type: 'text', hint: 'Catégorie réglementaire UE (les nôtres : batterie industrielle rechargeable)' },
+      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'lieu', hint: "Usine d'assemblage — ville, région et pays en code à 2 lettres (FR)" },
+      { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4', hint: "Technologie de stockage de l'énergie" },
+      {
+        key: 'statut',
+        label: 'Statut UE (état de la batterie)',
+        type: 'select',
+        hint: 'Commun à toutes les batteries du modèle (seconde vie Revaw) — remanufacturée = remise à neuf pour le même usage, reconvertie = autre usage que l\'origine',
+        options: [
+          { value: 'remanufacturee', label: 'Remanufacturée (même usage)' },
+          { value: 'reconvertie', label: 'Reconvertie (autre usage)' },
+          { value: 'reutilisee', label: 'Réutilisée (telle quelle)' },
+          { value: 'originale', label: 'Originale (neuve)' },
+        ],
+      },
     ],
   },
   {
@@ -234,54 +345,87 @@ const sections = [
       { key: 'tensionMinV', label: 'Tension minimale', type: 'number', unit: 'V' },
       { key: 'tensionNominaleV', label: 'Tension nominale', type: 'number', unit: 'V' },
       { key: 'tensionMaxV', label: 'Tension maximale', type: 'number', unit: 'V' },
-      { key: 'puissanceOrigineW', label: "Puissance d'origine", type: 'number', unit: 'W' },
-      { key: 'limitesPuissanceW', label: 'Limites de puissance', type: 'number', unit: 'W' },
+      { key: 'temperatureTensionsC', label: 'Validité des tensions (température)', type: 'range', unit: '°C', hint: 'Plage de température où les 3 tensions annoncées restent vraies' },
+      { key: 'puissanceOrigineW', label: "Puissance d'origine", type: 'number', unit: 'W', hint: 'Puissance que la batterie neuve peut fournir' },
+      { key: 'limitesPuissance', label: 'Limites de puissance par température', type: 'powerLimits', wide: true, hint: "Puissance max par plage de température (une ligne par plage ; reprendre la puissance d'origine si elle ne baisse pas au froid/chaud)" },
       { key: 'temperatureServiceC', label: 'Température en fonctionnement', type: 'range', unit: '°C' },
-      { key: 'temperatureStockageC', label: 'Température hors utilisation', type: 'range', unit: '°C' },
+      { key: 'temperatureStockageC', label: 'Température hors utilisation', type: 'range', unit: '°C', hint: 'Plage de stockage batterie éteinte' },
+      { key: 'essaiStockage', label: 'Essai température de stockage', type: 'text', placeholder: 'Ex: IEC 62619', hint: 'Norme ou test qui prouve la plage de stockage' },
     ],
   },
   {
     title: 'Performances et durabilité',
     icon: 'gauge-high',
     fields: [
-      { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number' },
-      { key: 'essaiReference', label: "Essai de référence", type: 'text' },
-      { key: 'tauxC', label: "Taux C de l'essai", type: 'number' },
-      { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%' },
-      { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%' },
-      { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ' },
-      { key: 'resistanceInterneBatterieMohm', label: 'Résistance interne batterie', type: 'number', unit: 'mΩ' },
-      { key: 'garantieMois', label: 'Garantie commerciale', type: 'number', unit: 'mois' },
+      { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number', hint: '1 cycle = une charge + une décharge complètes' },
+      { key: 'essaiReference', label: "Essai de référence", type: 'text', hint: 'Norme et conditions du test qui prouve le nombre de cycles (ex: IEC 62620, 25 °C)' },
+      { key: 'dureeVieAns', label: 'Durée de vie attendue', type: 'number', unit: 'ans', hint: 'En années, pour un usage normal' },
+      { key: 'tauxCCharge', label: "Taux C de charge de l'essai", type: 'number', unit: 'C', hint: 'Vitesse de charge pendant le test de cycles (1C = pleine charge en 1 h, 0,5C en 2 h)' },
+      { key: 'tauxCDecharge', label: "Taux C de décharge de l'essai", type: 'number', unit: 'C', hint: 'Même chose pour la vitesse de décharge' },
+      { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%', hint: 'Énergie restituée / énergie injectée (aller-retour), batterie neuve' },
+      { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%', hint: 'Même rendement, mesuré à la moitié des cycles prévus' },
+      { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ', hint: 'Fiche technique du fournisseur des cellules' },
+      { key: 'resistanceInterneBatterieMohm', label: 'Résistance interne batterie', type: 'number', unit: 'mΩ', hint: 'Batterie complète, cellules assemblées (mesurée en fin de production)' },
     ],
   },
   {
     title: 'Composition et sécurité',
     icon: 'flask',
     fields: [
-      { key: 'substancesDangereuses', label: 'Substances dangereuses', type: 'list' },
-      { key: 'agentExtincteur', label: 'Agent extincteur', type: 'text' },
-      { key: 'matieresCritiques', label: 'Matières premières critiques', type: 'list' },
+      { key: 'substancesDangereuses', label: 'Substances dangereuses', type: 'list', hint: 'Produits dangereux de la fiche de sécurité (FDS) des cellules, hors mercure/cadmium/plomb' },
+      { key: 'agentExtincteur', label: 'Agent extincteur', type: 'text', hint: 'Ce que les pompiers doivent utiliser en cas d\'incendie (FDS, rubrique incendie)' },
+      { key: 'matieresCritiques', label: 'Matières premières critiques', type: 'list', hint: 'Matières de la liste UE dépassant 0,1 % du poids (lithium, cuivre, graphite…)' },
+      { key: 'symbolePoubelleBarree', label: 'Poubelle barrée sur l\'étiquette', type: 'boolean', hint: 'Le logo « ne pas jeter aux ordures » figure-t-il sur l\'étiquette ?' },
+      { key: 'symbolesChimiques', label: 'Symboles chimiques (Cd / Pb)', type: 'symboles', hint: 'Marquage sous la poubelle barrée si cadmium ou plomb au-delà du seuil (lithium : aucun en général)' },
+      { key: 'compositionCathode', label: 'Cathode (électrode +)', type: 'text', placeholder: 'Ex: LiFePO4', hint: 'Matériau du côté positif des cellules' },
+      { key: 'compositionAnode', label: 'Anode (électrode −)', type: 'text', placeholder: 'Ex: graphite', hint: 'Matériau du côté négatif' },
+      { key: 'compositionElectrolyte', label: 'Électrolyte', type: 'text', hint: 'Le liquide conducteur à l\'intérieur des cellules' },
     ],
   },
   {
-    title: 'Environnement',
+    title: 'Environnement (en attente de la réglementation UE — ne pas remplir)',
     icon: 'leaf',
     fields: [
-      { key: 'empreinteCarboneKgCo2Kwh', label: 'Empreinte carbone', type: 'number', unit: 'kg CO₂ eq/kWh' },
-      { key: 'contenuRecyclePct', label: 'Contenu recyclé', type: 'number', unit: '%' },
-      { key: 'contenuRenouvelablePct', label: 'Contenu renouvelable', type: 'number', unit: '%' },
-      { key: 'approvisionnementResponsable', label: 'Approvisionnement responsable', type: 'text' },
+      { key: 'empreinteCarboneKgCo2Kwh', label: 'Empreinte carbone', type: 'number', unit: 'kg CO₂ eq/kWh', hint: 'CO₂ émis pour fabriquer la batterie (étude ACV déclarée)' },
+      { key: 'etiquetteCarbone', label: 'Classe de performance carbone', type: 'text', hint: 'Classe A-E de l\'étiquette carbone (règles UE pas encore publiées)' },
+      { key: 'contenuRecycle', label: 'Contenu recyclé par matériau', type: 'recycle', wide: true, hint: 'Part de matière recyclée dans chaque matériau (règles UE pas encore publiées)' },
+      { key: 'contenuRenouvelablePct', label: 'Contenu renouvelable', type: 'number', unit: '%', hint: 'Part du poids d\'origine végétale ou biologique (souvent 0 % pour une batterie)' },
+      { key: 'approvisionnementResponsable', label: 'Approvisionnement responsable', type: 'text', hint: 'Lien vers le rapport de diligence sur l\'origine des matières (exigé août 2027)' },
     ],
   },
   {
     title: 'Documents',
     icon: 'file',
     fields: [
-      { key: 'declarationUeUrl', label: 'Déclaration UE de conformité (URL)', type: 'url' },
+      { key: 'declarationUeUrl', label: 'Déclaration UE de conformité (URL)', type: 'url', hint: 'Le document officiel du marquage CE' },
+      { key: 'piecesDetacheesUrl', label: 'Catalogue pièces détachées (URL)', type: 'url', hint: 'Références des pièces remplaçables et où les commander (visible des professionnels)' },
+      { key: 'planDemontage', label: 'Notice de démontage (URL)', type: 'url', hint: 'Éclaté, étapes, fixations, outils, mises en garde (visible des professionnels)' },
+      { key: 'consignesSecurite', label: "Consignes d'intervention (URL)", type: 'url', hint: 'Précautions avant de toucher la batterie : couper le courant, gants isolants… (professionnels)' },
+      { key: 'rapportsEssais', label: 'Rapports de conformité (URL)', type: 'url', hint: 'Rapports des tests sécurité/performance (visibles des autorités seulement)' },
       // Pas de manuel ici : il dépend de la version (URL construite par
       // convention modèle + version côté passeport)
     ],
   },
+  {
+    title: 'Affichage passeport (hors schéma UE)',
+    icon: 'eye',
+    fields: [
+      { key: 'marquages', label: 'Signification des marquages', type: 'list', hint: 'Une entrée par logo de l\'étiquette, au format « logo = signification », séparées par des points-virgules' },
+      { key: 'referencesComposants', label: 'Références des composants', type: 'list', hint: 'Une entrée par composant remplaçable (« référence — nom »), séparées par des points-virgules' },
+      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'list', hint: 'Un fournisseur par entrée, séparés par des points-virgules' },
+      { key: 'outilsDemontage', label: 'Outils de démontage', type: 'text', hint: 'Outils nécessaires pour ouvrir la batterie (ex: clé Torx T25, pince isolée)' },
+      { key: 'fixations', label: 'Fixations (type et nombre)', type: 'text', hint: 'Vis, clips… à défaire pour le démontage (ex: 8 vis M5, 4 clips)' },
+      { key: 'dispositionCellules', label: 'Cellules (nombre et disposition)', type: 'text', hint: 'Ex: 15 cellules en série, 3 rangées de 5' },
+    ],
+  },
+]
+
+// Matériaux du contenu recyclé (schéma UE : un pourcentage par matériau)
+const RECYCLE_MATERIAUX = [
+  { key: 'cobaltPct', label: 'Cobalt' },
+  { key: 'lithiumPct', label: 'Lithium' },
+  { key: 'nickelPct', label: 'Nickel' },
+  { key: 'plombPct', label: 'Plomb' },
 ]
 
 // Labels à plat pour l'historique (field key -> label lisible)
@@ -290,6 +434,13 @@ const FIELD_LABELS = Object.fromEntries(
 )
 FIELD_LABELS['création'] = 'Création de la fiche'
 FIELD_LABELS['isActive'] = 'Statut actif'
+// Anciens champs (schéma d'avant la migration passeport du 25/11) : leurs
+// entrées d'historique doivent rester lisibles
+FIELD_LABELS['fabricant'] = 'Fabricant (retiré)'
+FIELD_LABELS['limitesPuissanceW'] = 'Limites de puissance (ancien format)'
+FIELD_LABELS['contenuRecyclePct'] = 'Contenu recyclé (ancien format)'
+FIELD_LABELS['tauxC'] = 'Taux C (retiré — remplacé par charge/décharge)'
+FIELD_LABELS['garantieMois'] = 'Garantie commerciale (retirée — gérée par client)'
 
 const fieldLabel = (key) => FIELD_LABELS[key] || key
 
@@ -303,10 +454,15 @@ const sortedHistory = computed(() => {
 const isEmpty = (field) => {
   const value = modele.value?.[field.key]
   if (value == null || value === '') return true
-  if (Array.isArray(value)) return value.length === 0
+  // Convention passeport : [] = « vérifié, aucun » → PAS vide (affiché Néant)
+  if (Array.isArray(value)) return false
   if (field.type === 'range') return value.min == null && value.max == null
   if (field.type === 'dimensions')
     return value.hauteur == null && value.largeur == null && value.epaisseur == null
+  if (field.type === 'lieu')
+    return value.ville == null && value.region == null && value.pays == null
+  if (field.type === 'recycle')
+    return RECYCLE_MATERIAUX.every((m) => value[m.key] == null)
   return false
 }
 
@@ -319,13 +475,35 @@ const displayValue = (field) => {
   if (field.type === 'dimensions') {
     return `${value.hauteur ?? '?'} × ${value.largeur ?? '?'} × ${value.epaisseur ?? '?'} mm`
   }
-  if (field.type === 'list') return value.join(', ')
+  if (field.type === 'lieu') {
+    return [value.ville, value.region, value.pays].filter(Boolean).join(', ')
+  }
+  if (field.type === 'boolean') return value ? 'Oui' : 'Non'
+  if (field.type === 'select') {
+    return field.options.find((o) => o.value === value)?.label ?? String(value)
+  }
+  if (field.type === 'recycle') {
+    return RECYCLE_MATERIAUX.map((m) => `${m.label} ${value[m.key] ?? '—'}${value[m.key] != null ? ' %' : ''}`).join(' · ')
+  }
+  if (field.type === 'powerLimits') {
+    if (value.length === 0) return 'À déterminer'
+    return value
+      .map((l) => `${l.puissanceW} W (${l.temperatureC?.min ?? '?'} → ${l.temperatureC?.max ?? '?'} °C)`)
+      .join(' ; ')
+  }
+  if (field.type === 'list' || field.type === 'symboles') {
+    if (value.length === 0) return 'Néant'
+    return value.join(value.some((v) => String(v).includes(',')) ? ' ; ' : ', ')
+  }
   return field.unit ? `${value} ${field.unit}` : `${value}`
 }
 
 const formatHistoryValue = (value) => {
   if (value == null || value === '') return '—'
-  if (Array.isArray(value)) return value.join(', ') || '—'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Néant'
+    return value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
+  }
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
@@ -336,13 +514,27 @@ const formatHistoryValue = (value) => {
  * Prépare le formulaire d'édition à partir de la fiche courante.
  * Les listes deviennent des chaînes "a, b, c", les objets imbriqués sont clonés.
  */
+const addPowerLimit = (key) => {
+  editForm.value[key].push({ puissanceW: null, temperatureC: { min: null, max: null } })
+}
+
 const startEdit = () => {
   const form = {}
   for (const section of sections) {
     for (const field of section.fields) {
       const value = modele.value[field.key]
       if (field.type === 'list') {
-        form[field.key] = Array.isArray(value) ? value.join(', ') : ''
+        // null → champ vide (à déterminer), [] → « néant » (vérifié aucun).
+        // Toujours joint par « ; » — seul séparateur reconnu au découpage,
+        // sinon une liste d'UNE entrée contenant une virgule serait recoupée
+        if (value == null) form[field.key] = ''
+        else if (value.length === 0) form[field.key] = 'néant'
+        else form[field.key] = value.join(' ; ')
+      } else if (field.type === 'symboles') {
+        // null / [] / ["Cd"] / ["Pb"] / ["Cd","Pb"] → valeur du select.
+        // Tri : ["Pb","Cd"] (ordre libre côté API) doit matcher l'option "Cd,Pb"
+        if (value == null) form[field.key] = null
+        else form[field.key] = value.length === 0 ? 'aucun' : [...value].sort().join(',')
       } else if (field.type === 'range') {
         form[field.key] = { min: value?.min ?? null, max: value?.max ?? null }
       } else if (field.type === 'dimensions') {
@@ -351,6 +543,21 @@ const startEdit = () => {
           largeur: value?.largeur ?? null,
           epaisseur: value?.epaisseur ?? null,
         }
+      } else if (field.type === 'lieu') {
+        form[field.key] = {
+          ville: value?.ville ?? null,
+          region: value?.region ?? null,
+          pays: value?.pays ?? null,
+        }
+      } else if (field.type === 'recycle') {
+        form[field.key] = Object.fromEntries(
+          RECYCLE_MATERIAUX.map((m) => [m.key, value?.[m.key] ?? null]),
+        )
+      } else if (field.type === 'powerLimits') {
+        form[field.key] = (value ?? []).map((l) => ({
+          puissanceW: l.puissanceW ?? null,
+          temperatureC: { min: l.temperatureC?.min ?? null, max: l.temperatureC?.max ?? null },
+        }))
       } else {
         form[field.key] = value ?? null
       }
@@ -376,16 +583,42 @@ const saveEdit = async () => {
     for (const field of section.fields) {
       const raw = editForm.value[field.key]
       if (field.type === 'list') {
-        payload[field.key] = (raw || '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
-      } else if (field.type === 'range' || field.type === 'dimensions') {
+        // vide → null (à déterminer), « néant »/« aucun » → [] (vérifié aucun)
+        const texte = (raw || '').trim()
+        if (!texte) payload[field.key] = null
+        else if (['néant', 'neant', 'aucun', 'aucune'].includes(texte.toLowerCase()))
+          payload[field.key] = []
+        else
+          // Seul « ; » sépare les entrées : une virgule fait partie du texte
+          payload[field.key] = texte
+            .split(';')
+            .map((s) => s.trim())
+            .filter(Boolean)
+      } else if (field.type === 'symboles') {
+        if (raw == null || raw === '') payload[field.key] = null
+        else payload[field.key] = raw === 'aucun' ? [] : raw.split(',')
+      } else if (field.type === 'boolean') {
+        payload[field.key] = raw === '' || raw == null ? null : raw
+      } else if (field.type === 'range' || field.type === 'dimensions' || field.type === 'lieu' || field.type === 'recycle') {
         const cleaned = {}
         for (const [k, v] of Object.entries(raw)) {
           cleaned[k] = v === '' || v == null ? null : v
         }
         payload[field.key] = cleaned
+      } else if (field.type === 'powerLimits') {
+        // lignes sans puissance ou ≤ 0 ignorées (le backend exige un nombre
+        // positif) ; aucune ligne → null (le backend refuse [], qui n'a pas
+        // de sens pour ce champ)
+        const lignes = raw
+          .filter((l) => Number(l.puissanceW) > 0)
+          .map((l) => ({
+            puissanceW: l.puissanceW,
+            temperatureC: {
+              min: l.temperatureC.min === '' || l.temperatureC.min == null ? null : l.temperatureC.min,
+              max: l.temperatureC.max === '' || l.temperatureC.max == null ? null : l.temperatureC.max,
+            },
+          }))
+        payload[field.key] = lignes.length > 0 ? lignes : null
       } else {
         payload[field.key] = raw === '' || raw == null ? null : raw
       }
@@ -397,7 +630,10 @@ const saveEdit = async () => {
     isEditing.value = false
     toast.success('Fiche mise à jour')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Erreur mise à jour de la fiche')
+    const data = err.response?.data
+    // errors[0] = premier détail Joi (nomme le champ refusé), bien plus utile
+    // que le générique « Erreur de validation (body) »
+    toast.error(data?.errors?.[0] || data?.message || 'Erreur mise à jour de la fiche')
   }
 }
 
@@ -600,6 +836,13 @@ onMounted(async () => {
     letter-spacing: 0.03em;
   }
 
+  &__hint {
+    font-size: $font-size-xs;
+    color: var(--text-tertiary);
+    line-height: 1.35;
+    margin-top: -2px;
+  }
+
   &__value {
     font-size: $font-size-sm;
     color: var(--text-primary);
@@ -628,6 +871,69 @@ onMounted(async () => {
 .range-sep {
   color: var(--text-tertiary);
   flex-shrink: 0;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.input-pays {
+  max-width: 90px;
+  text-transform: uppercase;
+}
+
+.recycle-inputs {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.recycle-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 90px;
+
+  span {
+    font-size: $font-size-xs;
+    color: var(--text-secondary);
+  }
+}
+
+.power-limits {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+
+    input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.btn-add-row {
+  width: fit-content;
+  font-size: $font-size-sm;
+}
+
+.btn-icon-danger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-danger, #c0392b);
+  padding: $spacing-1 $spacing-2;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 // Historique
