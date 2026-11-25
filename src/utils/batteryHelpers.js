@@ -51,8 +51,8 @@ export function getBatteryKwh(battery) {
       return '13 kWh'
     case 250:
       return '12 kWh'
-    case 175:
-      // renommé 8.4 → 8 kWh (décision ingénieur 25/11/2026)
+    case 167:
+      // ex-8.4 kWh/175 Ah, devenu 8 kWh/167 Ah le 25/11/2026 (aucune 175 produite)
       return '8 kWh'
     default:
       return 'N/A'
