@@ -80,7 +80,7 @@
               <option value="">Tous les modèles</option>
               <option value="13">13 kWh</option>
               <option value="12">12 kWh</option>
-              <option value="8.4">8.4 kWh</option>
+              <option value="8">8 kWh</option>
             </select>
           </div>
         </div>
@@ -184,7 +184,7 @@ const DEFAULT_FILTERS = {
   isInTest: false, // Checkbox: Afficher "En test" (Défaut à false pour ne pas polluer la vue)
   startDate: null, // Date début (Filtre sur date expédition)
   endDate: null, // Date fin
-  kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8.4)
+  kwh: '', // Sélecteur : Filtrage par modèle (13, 12, 8)
   client: '', // Sélecteur : Filtrage par client (slug du référentiel)
   serial: '', // Recherche par numéro de série
 }
