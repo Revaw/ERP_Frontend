@@ -123,6 +123,16 @@
                 <option :value="false">Non</option>
               </select>
               <select
+                v-else-if="field.type === 'select'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <select
                 v-else-if="field.type === 'symboles'"
                 :id="field.key"
                 v-model="editForm[field.key]"
@@ -310,6 +320,18 @@ const sections = [
       { key: 'categorie', label: 'Catégorie de batterie', type: 'text', hint: 'Catégorie réglementaire UE (les nôtres : batterie industrielle rechargeable)' },
       { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'lieu', hint: "Usine d'assemblage — ville, région et pays en code à 2 lettres (FR)" },
       { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4', hint: "Technologie de stockage de l'énergie" },
+      {
+        key: 'statut',
+        label: 'Statut UE (état de la batterie)',
+        type: 'select',
+        hint: 'Commun à toutes les batteries du modèle (seconde vie Revaw) — remanufacturée = remise à neuf pour le même usage, reconvertie = autre usage que l\'origine',
+        options: [
+          { value: 'remanufacturee', label: 'Remanufacturée (même usage)' },
+          { value: 'reconvertie', label: 'Reconvertie (autre usage)' },
+          { value: 'reutilisee', label: 'Réutilisée (telle quelle)' },
+          { value: 'originale', label: 'Originale (neuve)' },
+        ],
+      },
     ],
   },
   {
@@ -338,14 +360,12 @@ const sections = [
       { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number', hint: '1 cycle = une charge + une décharge complètes' },
       { key: 'essaiReference', label: "Essai de référence", type: 'text', hint: 'Norme et conditions du test qui prouve le nombre de cycles (ex: IEC 62620, 25 °C)' },
       { key: 'dureeVieAns', label: 'Durée de vie attendue', type: 'number', unit: 'ans', hint: 'En années, pour un usage normal' },
-      { key: 'tauxC', label: 'Taux C (déprécié)', type: 'number', hint: 'Ancienne valeur unique dont on ignore ce qu\'elle mesure — à remplacer par les deux champs suivants' },
       { key: 'tauxCCharge', label: "Taux C de charge de l'essai", type: 'number', unit: 'C', hint: 'Vitesse de charge pendant le test de cycles (1C = pleine charge en 1 h, 0,5C en 2 h)' },
       { key: 'tauxCDecharge', label: "Taux C de décharge de l'essai", type: 'number', unit: 'C', hint: 'Même chose pour la vitesse de décharge' },
       { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%', hint: 'Énergie restituée / énergie injectée (aller-retour), batterie neuve' },
       { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%', hint: 'Même rendement, mesuré à la moitié des cycles prévus' },
       { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ', hint: 'Fiche technique du fournisseur des cellules' },
       { key: 'resistanceInterneBatterieMohm', label: 'Résistance interne batterie', type: 'number', unit: 'mΩ', hint: 'Batterie complète, cellules assemblées (mesurée en fin de production)' },
-      { key: 'garantieMois', label: 'Garantie commerciale', type: 'number', unit: 'mois', hint: 'Lue par le passeport — la garantie réelle par client se gère sur la fiche client' },
     ],
   },
   {
@@ -419,6 +439,8 @@ FIELD_LABELS['isActive'] = 'Statut actif'
 FIELD_LABELS['fabricant'] = 'Fabricant (retiré)'
 FIELD_LABELS['limitesPuissanceW'] = 'Limites de puissance (ancien format)'
 FIELD_LABELS['contenuRecyclePct'] = 'Contenu recyclé (ancien format)'
+FIELD_LABELS['tauxC'] = 'Taux C (retiré — remplacé par charge/décharge)'
+FIELD_LABELS['garantieMois'] = 'Garantie commerciale (retirée — gérée par client)'
 
 const fieldLabel = (key) => FIELD_LABELS[key] || key
 
@@ -457,6 +479,9 @@ const displayValue = (field) => {
     return [value.ville, value.region, value.pays].filter(Boolean).join(', ')
   }
   if (field.type === 'boolean') return value ? 'Oui' : 'Non'
+  if (field.type === 'select') {
+    return field.options.find((o) => o.value === value)?.label ?? String(value)
+  }
   if (field.type === 'recycle') {
     return RECYCLE_MATERIAUX.map((m) => `${m.label} ${value[m.key] ?? '—'}${value[m.key] != null ? ' %' : ''}`).join(' · ')
   }
