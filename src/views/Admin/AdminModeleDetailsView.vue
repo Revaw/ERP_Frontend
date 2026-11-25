@@ -111,7 +111,7 @@
                 :id="field.key"
                 type="text"
                 v-model="editForm[field.key]"
-                placeholder="valeurs séparées par des virgules — « néant » si vérifié aucun"
+                placeholder="valeurs séparées par des virgules ou des points-virgules — « néant » si vérifié aucun"
               />
               <select
                 v-else-if="field.type === 'boolean'"
@@ -390,9 +390,9 @@ const sections = [
     title: 'Affichage passeport (hors schéma UE)',
     icon: 'eye',
     fields: [
-      { key: 'marquages', label: 'Signification des marquages', type: 'text', hint: 'Ce que veulent dire les logos de l\'étiquette (ex: poubelle barrée = collecte séparée)' },
-      { key: 'referencesComposants', label: 'Références des composants', type: 'text', hint: 'Références des composants remplaçables affichées sur le site du passeport' },
-      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'text', hint: 'Qui fournit les pièces détachées' },
+      { key: 'marquages', label: 'Signification des marquages', type: 'list', hint: 'Une entrée par logo de l\'étiquette, au format « logo = signification », séparées par des points-virgules' },
+      { key: 'referencesComposants', label: 'Références des composants', type: 'list', hint: 'Une entrée par composant remplaçable (« référence — nom »), séparées par des points-virgules' },
+      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'list', hint: 'Un fournisseur par entrée, séparés par des points-virgules' },
       { key: 'outilsDemontage', label: 'Outils de démontage', type: 'text', hint: 'Outils nécessaires pour ouvrir la batterie (ex: clé Torx T25, pince isolée)' },
       { key: 'fixations', label: 'Fixations (type et nombre)', type: 'text', hint: 'Vis, clips… à défaire pour le démontage (ex: 8 vis M5, 4 clips)' },
       { key: 'dispositionCellules', label: 'Cellules (nombre et disposition)', type: 'text', hint: 'Ex: 15 cellules en série, 3 rangées de 5' },
@@ -467,7 +467,8 @@ const displayValue = (field) => {
       .join(' ; ')
   }
   if (field.type === 'list' || field.type === 'symboles') {
-    return value.length === 0 ? 'Néant' : value.join(', ')
+    if (value.length === 0) return 'Néant'
+    return value.join(value.some((v) => String(v).includes(',')) ? ' ; ' : ', ')
   }
   return field.unit ? `${value} ${field.unit}` : `${value}`
 }
@@ -498,9 +499,11 @@ const startEdit = () => {
     for (const field of section.fields) {
       const value = modele.value[field.key]
       if (field.type === 'list') {
-        // null → champ vide (à déterminer), [] → « néant » (vérifié aucun)
+        // null → champ vide (à déterminer), [] → « néant » (vérifié aucun).
+        // Jointure par « ; » si une entrée contient une virgule (phrases)
         if (value == null) form[field.key] = ''
-        else form[field.key] = value.length === 0 ? 'néant' : value.join(', ')
+        else if (value.length === 0) form[field.key] = 'néant'
+        else form[field.key] = value.join(value.some((v) => v.includes(',')) ? ' ; ' : ', ')
       } else if (field.type === 'symboles') {
         // null / [] / ["Cd"] / ["Pb"] / ["Cd","Pb"] → valeur du select
         if (value == null) form[field.key] = null
@@ -559,8 +562,9 @@ const saveEdit = async () => {
         else if (['néant', 'neant', 'aucun', 'aucune'].includes(texte.toLowerCase()))
           payload[field.key] = []
         else
+          // « ; » prioritaire : permet des entrées contenant des virgules
           payload[field.key] = texte
-            .split(',')
+            .split(texte.includes(';') ? ';' : ',')
             .map((s) => s.trim())
             .filter(Boolean)
       } else if (field.type === 'symboles') {
