@@ -81,7 +81,11 @@
           {{ section.title }}
         </h3>
         <div class="fields-grid">
-          <div v-for="field in section.fields" :key="field.key" class="field">
+          <div
+            v-for="field in section.fields"
+            :key="field.key"
+            :class="['field', { 'field--wide': field.wide }]"
+          >
             <label :for="field.key">{{ field.label }}</label>
 
             <!-- Mode édition -->
@@ -106,8 +110,92 @@
                 :id="field.key"
                 type="text"
                 v-model="editForm[field.key]"
-                placeholder="valeurs séparées par des virgules"
+                placeholder="valeurs séparées par des virgules — « néant » si vérifié aucun"
               />
+              <select
+                v-else-if="field.type === 'boolean'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option :value="true">Oui</option>
+                <option :value="false">Non</option>
+              </select>
+              <select
+                v-else-if="field.type === 'symboles'"
+                :id="field.key"
+                v-model="editForm[field.key]"
+              >
+                <option :value="null">À déterminer</option>
+                <option value="aucun">Aucun (vérifié)</option>
+                <option value="Cd">Cd</option>
+                <option value="Pb">Pb</option>
+                <option value="Cd,Pb">Cd et Pb</option>
+              </select>
+              <div v-else-if="field.type === 'lieu'" class="range-inputs">
+                <input type="text" v-model="editForm[field.key].ville" placeholder="ville" />
+                <input type="text" v-model="editForm[field.key].region" placeholder="région" />
+                <input
+                  type="text"
+                  v-model="editForm[field.key].pays"
+                  placeholder="pays (FR)"
+                  maxlength="2"
+                  class="input-pays"
+                />
+              </div>
+              <div v-else-if="field.type === 'recycle'" class="recycle-inputs">
+                <label v-for="mat in RECYCLE_MATERIAUX" :key="mat.key" class="recycle-item">
+                  <span>{{ mat.label }}</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    max="100"
+                    v-model.number="editForm[field.key][mat.key]"
+                    placeholder="%"
+                  />
+                </label>
+              </div>
+              <div v-else-if="field.type === 'powerLimits'" class="power-limits">
+                <div
+                  v-for="(ligne, index) in editForm[field.key]"
+                  :key="index"
+                  class="power-limits__row"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.puissanceW"
+                    placeholder="puissance (W)"
+                  />
+                  <span class="range-sep">entre</span>
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.temperatureC.min"
+                    placeholder="min °C"
+                  />
+                  <span class="range-sep">et</span>
+                  <input
+                    type="number"
+                    step="any"
+                    v-model.number="ligne.temperatureC.max"
+                    placeholder="max °C"
+                  />
+                  <button
+                    type="button"
+                    class="btn-icon-danger"
+                    title="Retirer cette plage"
+                    @click="editForm[field.key].splice(index, 1)"
+                  >
+                    <FontAwesomeIcon :icon="['fas', 'trash']" />
+                  </button>
+                </div>
+                <button type="button" class="btn-secondary btn-add-row" @click="addPowerLimit(field.key)">
+                  <FontAwesomeIcon :icon="['fas', 'plus']" />
+                  Ajouter une plage
+                </button>
+              </div>
               <div v-else-if="field.type === 'range'" class="range-inputs">
                 <input
                   type="number"
@@ -217,9 +305,9 @@ const sections = [
     title: 'Identité',
     icon: 'id-card',
     fields: [
-      { key: 'fabricant', label: 'Fabricant', type: 'text' },
+      // (pas de fabricant : donnée d'entreprise, portée par le back du passeport)
       { key: 'categorie', label: 'Catégorie de batterie', type: 'text' },
-      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'text' },
+      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'lieu' },
       { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4' },
     ],
   },
@@ -234,10 +322,12 @@ const sections = [
       { key: 'tensionMinV', label: 'Tension minimale', type: 'number', unit: 'V' },
       { key: 'tensionNominaleV', label: 'Tension nominale', type: 'number', unit: 'V' },
       { key: 'tensionMaxV', label: 'Tension maximale', type: 'number', unit: 'V' },
+      { key: 'temperatureTensionsC', label: 'Validité des tensions (température)', type: 'range', unit: '°C' },
       { key: 'puissanceOrigineW', label: "Puissance d'origine", type: 'number', unit: 'W' },
-      { key: 'limitesPuissanceW', label: 'Limites de puissance', type: 'number', unit: 'W' },
+      { key: 'limitesPuissance', label: 'Limites de puissance par température', type: 'powerLimits', wide: true },
       { key: 'temperatureServiceC', label: 'Température en fonctionnement', type: 'range', unit: '°C' },
       { key: 'temperatureStockageC', label: 'Température hors utilisation', type: 'range', unit: '°C' },
+      { key: 'essaiStockage', label: 'Essai température de stockage', type: 'text', placeholder: 'Ex: IEC 62619' },
     ],
   },
   {
@@ -246,7 +336,10 @@ const sections = [
     fields: [
       { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number' },
       { key: 'essaiReference', label: "Essai de référence", type: 'text' },
-      { key: 'tauxC', label: "Taux C de l'essai", type: 'number' },
+      { key: 'dureeVieAns', label: 'Durée de vie attendue', type: 'number', unit: 'ans' },
+      { key: 'tauxC', label: 'Taux C (déprécié)', type: 'number' },
+      { key: 'tauxCCharge', label: "Taux C de charge de l'essai", type: 'number', unit: 'C' },
+      { key: 'tauxCDecharge', label: "Taux C de décharge de l'essai", type: 'number', unit: 'C' },
       { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%' },
       { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%' },
       { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ' },
@@ -261,14 +354,20 @@ const sections = [
       { key: 'substancesDangereuses', label: 'Substances dangereuses', type: 'list' },
       { key: 'agentExtincteur', label: 'Agent extincteur', type: 'text' },
       { key: 'matieresCritiques', label: 'Matières premières critiques', type: 'list' },
+      { key: 'symbolePoubelleBarree', label: 'Poubelle barrée sur l\'étiquette', type: 'boolean' },
+      { key: 'symbolesChimiques', label: 'Symboles chimiques (Cd / Pb)', type: 'symboles' },
+      { key: 'compositionCathode', label: 'Cathode (électrode +)', type: 'text', placeholder: 'Ex: LiFePO4' },
+      { key: 'compositionAnode', label: 'Anode (électrode −)', type: 'text', placeholder: 'Ex: graphite' },
+      { key: 'compositionElectrolyte', label: 'Électrolyte', type: 'text' },
     ],
   },
   {
-    title: 'Environnement',
+    title: 'Environnement (en attente de la réglementation UE — ne pas remplir)',
     icon: 'leaf',
     fields: [
       { key: 'empreinteCarboneKgCo2Kwh', label: 'Empreinte carbone', type: 'number', unit: 'kg CO₂ eq/kWh' },
-      { key: 'contenuRecyclePct', label: 'Contenu recyclé', type: 'number', unit: '%' },
+      { key: 'etiquetteCarbone', label: 'Classe de performance carbone', type: 'text' },
+      { key: 'contenuRecycle', label: 'Contenu recyclé par matériau', type: 'recycle', wide: true },
       { key: 'contenuRenouvelablePct', label: 'Contenu renouvelable', type: 'number', unit: '%' },
       { key: 'approvisionnementResponsable', label: 'Approvisionnement responsable', type: 'text' },
     ],
@@ -278,10 +377,34 @@ const sections = [
     icon: 'file',
     fields: [
       { key: 'declarationUeUrl', label: 'Déclaration UE de conformité (URL)', type: 'url' },
+      { key: 'piecesDetacheesUrl', label: 'Catalogue pièces détachées (URL)', type: 'url' },
+      { key: 'planDemontage', label: 'Notice de démontage (URL)', type: 'url' },
+      { key: 'consignesSecurite', label: "Consignes d'intervention (URL)", type: 'url' },
+      { key: 'rapportsEssais', label: 'Rapports de conformité (URL)', type: 'url' },
       // Pas de manuel ici : il dépend de la version (URL construite par
       // convention modèle + version côté passeport)
     ],
   },
+  {
+    title: 'Affichage passeport (hors schéma UE)',
+    icon: 'eye',
+    fields: [
+      { key: 'marquages', label: 'Signification des marquages', type: 'text' },
+      { key: 'referencesComposants', label: 'Références des composants', type: 'text' },
+      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'text' },
+      { key: 'outilsDemontage', label: 'Outils de démontage', type: 'text' },
+      { key: 'fixations', label: 'Fixations (type et nombre)', type: 'text' },
+      { key: 'dispositionCellules', label: 'Cellules (nombre et disposition)', type: 'text' },
+    ],
+  },
+]
+
+// Matériaux du contenu recyclé (schéma UE : un pourcentage par matériau)
+const RECYCLE_MATERIAUX = [
+  { key: 'cobaltPct', label: 'Cobalt' },
+  { key: 'lithiumPct', label: 'Lithium' },
+  { key: 'nickelPct', label: 'Nickel' },
+  { key: 'plombPct', label: 'Plomb' },
 ]
 
 // Labels à plat pour l'historique (field key -> label lisible)
@@ -290,6 +413,11 @@ const FIELD_LABELS = Object.fromEntries(
 )
 FIELD_LABELS['création'] = 'Création de la fiche'
 FIELD_LABELS['isActive'] = 'Statut actif'
+// Anciens champs (schéma d'avant la migration passeport du 25/11) : leurs
+// entrées d'historique doivent rester lisibles
+FIELD_LABELS['fabricant'] = 'Fabricant (retiré)'
+FIELD_LABELS['limitesPuissanceW'] = 'Limites de puissance (ancien format)'
+FIELD_LABELS['contenuRecyclePct'] = 'Contenu recyclé (ancien format)'
 
 const fieldLabel = (key) => FIELD_LABELS[key] || key
 
@@ -303,10 +431,15 @@ const sortedHistory = computed(() => {
 const isEmpty = (field) => {
   const value = modele.value?.[field.key]
   if (value == null || value === '') return true
-  if (Array.isArray(value)) return value.length === 0
+  // Convention passeport : [] = « vérifié, aucun » → PAS vide (affiché Néant)
+  if (Array.isArray(value)) return false
   if (field.type === 'range') return value.min == null && value.max == null
   if (field.type === 'dimensions')
     return value.hauteur == null && value.largeur == null && value.epaisseur == null
+  if (field.type === 'lieu')
+    return value.ville == null && value.region == null && value.pays == null
+  if (field.type === 'recycle')
+    return RECYCLE_MATERIAUX.every((m) => value[m.key] == null)
   return false
 }
 
@@ -319,13 +452,31 @@ const displayValue = (field) => {
   if (field.type === 'dimensions') {
     return `${value.hauteur ?? '?'} × ${value.largeur ?? '?'} × ${value.epaisseur ?? '?'} mm`
   }
-  if (field.type === 'list') return value.join(', ')
+  if (field.type === 'lieu') {
+    return [value.ville, value.region, value.pays].filter(Boolean).join(', ')
+  }
+  if (field.type === 'boolean') return value ? 'Oui' : 'Non'
+  if (field.type === 'recycle') {
+    return RECYCLE_MATERIAUX.map((m) => `${m.label} ${value[m.key] ?? '—'}${value[m.key] != null ? ' %' : ''}`).join(' · ')
+  }
+  if (field.type === 'powerLimits') {
+    if (value.length === 0) return 'À déterminer'
+    return value
+      .map((l) => `${l.puissanceW} W (${l.temperatureC?.min ?? '?'} → ${l.temperatureC?.max ?? '?'} °C)`)
+      .join(' ; ')
+  }
+  if (field.type === 'list' || field.type === 'symboles') {
+    return value.length === 0 ? 'Néant' : value.join(', ')
+  }
   return field.unit ? `${value} ${field.unit}` : `${value}`
 }
 
 const formatHistoryValue = (value) => {
   if (value == null || value === '') return '—'
-  if (Array.isArray(value)) return value.join(', ') || '—'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Néant'
+    return value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
+  }
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
@@ -336,13 +487,23 @@ const formatHistoryValue = (value) => {
  * Prépare le formulaire d'édition à partir de la fiche courante.
  * Les listes deviennent des chaînes "a, b, c", les objets imbriqués sont clonés.
  */
+const addPowerLimit = (key) => {
+  editForm.value[key].push({ puissanceW: null, temperatureC: { min: null, max: null } })
+}
+
 const startEdit = () => {
   const form = {}
   for (const section of sections) {
     for (const field of section.fields) {
       const value = modele.value[field.key]
       if (field.type === 'list') {
-        form[field.key] = Array.isArray(value) ? value.join(', ') : ''
+        // null → champ vide (à déterminer), [] → « néant » (vérifié aucun)
+        if (value == null) form[field.key] = ''
+        else form[field.key] = value.length === 0 ? 'néant' : value.join(', ')
+      } else if (field.type === 'symboles') {
+        // null / [] / ["Cd"] / ["Pb"] / ["Cd","Pb"] → valeur du select
+        if (value == null) form[field.key] = null
+        else form[field.key] = value.length === 0 ? 'aucun' : value.join(',')
       } else if (field.type === 'range') {
         form[field.key] = { min: value?.min ?? null, max: value?.max ?? null }
       } else if (field.type === 'dimensions') {
@@ -351,6 +512,21 @@ const startEdit = () => {
           largeur: value?.largeur ?? null,
           epaisseur: value?.epaisseur ?? null,
         }
+      } else if (field.type === 'lieu') {
+        form[field.key] = {
+          ville: value?.ville ?? null,
+          region: value?.region ?? null,
+          pays: value?.pays ?? null,
+        }
+      } else if (field.type === 'recycle') {
+        form[field.key] = Object.fromEntries(
+          RECYCLE_MATERIAUX.map((m) => [m.key, value?.[m.key] ?? null]),
+        )
+      } else if (field.type === 'powerLimits') {
+        form[field.key] = (value ?? []).map((l) => ({
+          puissanceW: l.puissanceW ?? null,
+          temperatureC: { min: l.temperatureC?.min ?? null, max: l.temperatureC?.max ?? null },
+        }))
       } else {
         form[field.key] = value ?? null
       }
@@ -376,16 +552,40 @@ const saveEdit = async () => {
     for (const field of section.fields) {
       const raw = editForm.value[field.key]
       if (field.type === 'list') {
-        payload[field.key] = (raw || '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
-      } else if (field.type === 'range' || field.type === 'dimensions') {
+        // vide → null (à déterminer), « néant »/« aucun » → [] (vérifié aucun)
+        const texte = (raw || '').trim()
+        if (!texte) payload[field.key] = null
+        else if (['néant', 'neant', 'aucun', 'aucune'].includes(texte.toLowerCase()))
+          payload[field.key] = []
+        else
+          payload[field.key] = texte
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+      } else if (field.type === 'symboles') {
+        if (raw == null || raw === '') payload[field.key] = null
+        else payload[field.key] = raw === 'aucun' ? [] : raw.split(',')
+      } else if (field.type === 'boolean') {
+        payload[field.key] = raw === '' || raw == null ? null : raw
+      } else if (field.type === 'range' || field.type === 'dimensions' || field.type === 'lieu' || field.type === 'recycle') {
         const cleaned = {}
         for (const [k, v] of Object.entries(raw)) {
           cleaned[k] = v === '' || v == null ? null : v
         }
         payload[field.key] = cleaned
+      } else if (field.type === 'powerLimits') {
+        // lignes sans puissance ignorées ; aucune ligne → null (le backend
+        // refuse [], qui n'a pas de sens pour ce champ)
+        const lignes = raw
+          .filter((l) => l.puissanceW != null && l.puissanceW !== '')
+          .map((l) => ({
+            puissanceW: l.puissanceW,
+            temperatureC: {
+              min: l.temperatureC.min === '' || l.temperatureC.min == null ? null : l.temperatureC.min,
+              max: l.temperatureC.max === '' || l.temperatureC.max == null ? null : l.temperatureC.max,
+            },
+          }))
+        payload[field.key] = lignes.length > 0 ? lignes : null
       } else {
         payload[field.key] = raw === '' || raw == null ? null : raw
       }
@@ -628,6 +828,69 @@ onMounted(async () => {
 .range-sep {
   color: var(--text-tertiary);
   flex-shrink: 0;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.input-pays {
+  max-width: 90px;
+  text-transform: uppercase;
+}
+
+.recycle-inputs {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.recycle-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 90px;
+
+  span {
+    font-size: $font-size-xs;
+    color: var(--text-secondary);
+  }
+}
+
+.power-limits {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+
+    input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.btn-add-row {
+  width: fit-content;
+  font-size: $font-size-sm;
+}
+
+.btn-icon-danger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-danger, #c0392b);
+  padding: $spacing-1 $spacing-2;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 // Historique
