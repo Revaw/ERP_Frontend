@@ -525,14 +525,16 @@ const startEdit = () => {
       const value = modele.value[field.key]
       if (field.type === 'list') {
         // null → champ vide (à déterminer), [] → « néant » (vérifié aucun).
-        // Jointure par « ; » si une entrée contient une virgule (phrases)
+        // Toujours joint par « ; » — seul séparateur reconnu au découpage,
+        // sinon une liste d'UNE entrée contenant une virgule serait recoupée
         if (value == null) form[field.key] = ''
         else if (value.length === 0) form[field.key] = 'néant'
-        else form[field.key] = value.join(value.some((v) => v.includes(',')) ? ' ; ' : ', ')
+        else form[field.key] = value.join(' ; ')
       } else if (field.type === 'symboles') {
-        // null / [] / ["Cd"] / ["Pb"] / ["Cd","Pb"] → valeur du select
+        // null / [] / ["Cd"] / ["Pb"] / ["Cd","Pb"] → valeur du select.
+        // Tri : ["Pb","Cd"] (ordre libre côté API) doit matcher l'option "Cd,Pb"
         if (value == null) form[field.key] = null
-        else form[field.key] = value.length === 0 ? 'aucun' : value.join(',')
+        else form[field.key] = value.length === 0 ? 'aucun' : [...value].sort().join(',')
       } else if (field.type === 'range') {
         form[field.key] = { min: value?.min ?? null, max: value?.max ?? null }
       } else if (field.type === 'dimensions') {
@@ -587,9 +589,9 @@ const saveEdit = async () => {
         else if (['néant', 'neant', 'aucun', 'aucune'].includes(texte.toLowerCase()))
           payload[field.key] = []
         else
-          // « ; » prioritaire : permet des entrées contenant des virgules
+          // Seul « ; » sépare les entrées : une virgule fait partie du texte
           payload[field.key] = texte
-            .split(texte.includes(';') ? ';' : ',')
+            .split(';')
             .map((s) => s.trim())
             .filter(Boolean)
       } else if (field.type === 'symboles') {
@@ -604,10 +606,11 @@ const saveEdit = async () => {
         }
         payload[field.key] = cleaned
       } else if (field.type === 'powerLimits') {
-        // lignes sans puissance ignorées ; aucune ligne → null (le backend
-        // refuse [], qui n'a pas de sens pour ce champ)
+        // lignes sans puissance ou ≤ 0 ignorées (le backend exige un nombre
+        // positif) ; aucune ligne → null (le backend refuse [], qui n'a pas
+        // de sens pour ce champ)
         const lignes = raw
-          .filter((l) => l.puissanceW != null && l.puissanceW !== '')
+          .filter((l) => Number(l.puissanceW) > 0)
           .map((l) => ({
             puissanceW: l.puissanceW,
             temperatureC: {
@@ -627,7 +630,10 @@ const saveEdit = async () => {
     isEditing.value = false
     toast.success('Fiche mise à jour')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Erreur mise à jour de la fiche')
+    const data = err.response?.data
+    // errors[0] = premier détail Joi (nomme le champ refusé), bien plus utile
+    // que le générique « Erreur de validation (body) »
+    toast.error(data?.errors?.[0] || data?.message || 'Erreur mise à jour de la fiche')
   }
 }
 
