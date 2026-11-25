@@ -111,7 +111,7 @@
                 :id="field.key"
                 type="text"
                 v-model="editForm[field.key]"
-                placeholder="valeurs séparées par des virgules ou des points-virgules — « néant » si vérifié aucun"
+                placeholder="entrée 1 ; entrée 2 — ou « néant »"
               />
               <select
                 v-else-if="field.type === 'boolean'"
