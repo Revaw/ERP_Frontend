@@ -87,6 +87,7 @@
             :class="['field', { 'field--wide': field.wide }]"
           >
             <label :for="field.key">{{ field.label }}</label>
+            <span v-if="field.hint" class="field__hint">{{ field.hint }}</span>
 
             <!-- Mode édition -->
             <template v-if="isEditing">
@@ -306,9 +307,9 @@ const sections = [
     icon: 'id-card',
     fields: [
       // (pas de fabricant : donnée d'entreprise, portée par le back du passeport)
-      { key: 'categorie', label: 'Catégorie de batterie', type: 'text' },
-      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'lieu' },
-      { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4' },
+      { key: 'categorie', label: 'Catégorie de batterie', type: 'text', hint: 'Catégorie réglementaire UE (les nôtres : batterie industrielle rechargeable)' },
+      { key: 'lieuFabrication', label: 'Lieu de fabrication', type: 'lieu', hint: "Usine d'assemblage — ville, région et pays en code à 2 lettres (FR)" },
+      { key: 'chimie', label: 'Chimie', type: 'text', placeholder: 'Ex: LiFePO4', hint: "Technologie de stockage de l'énergie" },
     ],
   },
   {
@@ -322,65 +323,65 @@ const sections = [
       { key: 'tensionMinV', label: 'Tension minimale', type: 'number', unit: 'V' },
       { key: 'tensionNominaleV', label: 'Tension nominale', type: 'number', unit: 'V' },
       { key: 'tensionMaxV', label: 'Tension maximale', type: 'number', unit: 'V' },
-      { key: 'temperatureTensionsC', label: 'Validité des tensions (température)', type: 'range', unit: '°C' },
-      { key: 'puissanceOrigineW', label: "Puissance d'origine", type: 'number', unit: 'W' },
-      { key: 'limitesPuissance', label: 'Limites de puissance par température', type: 'powerLimits', wide: true },
+      { key: 'temperatureTensionsC', label: 'Validité des tensions (température)', type: 'range', unit: '°C', hint: 'Plage de température où les 3 tensions annoncées restent vraies' },
+      { key: 'puissanceOrigineW', label: "Puissance d'origine", type: 'number', unit: 'W', hint: 'Puissance que la batterie neuve peut fournir' },
+      { key: 'limitesPuissance', label: 'Limites de puissance par température', type: 'powerLimits', wide: true, hint: "Puissance max par plage de température (une ligne par plage ; reprendre la puissance d'origine si elle ne baisse pas au froid/chaud)" },
       { key: 'temperatureServiceC', label: 'Température en fonctionnement', type: 'range', unit: '°C' },
-      { key: 'temperatureStockageC', label: 'Température hors utilisation', type: 'range', unit: '°C' },
-      { key: 'essaiStockage', label: 'Essai température de stockage', type: 'text', placeholder: 'Ex: IEC 62619' },
+      { key: 'temperatureStockageC', label: 'Température hors utilisation', type: 'range', unit: '°C', hint: 'Plage de stockage batterie éteinte' },
+      { key: 'essaiStockage', label: 'Essai température de stockage', type: 'text', placeholder: 'Ex: IEC 62619', hint: 'Norme ou test qui prouve la plage de stockage' },
     ],
   },
   {
     title: 'Performances et durabilité',
     icon: 'gauge-high',
     fields: [
-      { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number' },
-      { key: 'essaiReference', label: "Essai de référence", type: 'text' },
-      { key: 'dureeVieAns', label: 'Durée de vie attendue', type: 'number', unit: 'ans' },
-      { key: 'tauxC', label: 'Taux C (déprécié)', type: 'number' },
-      { key: 'tauxCCharge', label: "Taux C de charge de l'essai", type: 'number', unit: 'C' },
-      { key: 'tauxCDecharge', label: "Taux C de décharge de l'essai", type: 'number', unit: 'C' },
-      { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%' },
-      { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%' },
-      { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ' },
-      { key: 'resistanceInterneBatterieMohm', label: 'Résistance interne batterie', type: 'number', unit: 'mΩ' },
-      { key: 'garantieMois', label: 'Garantie commerciale', type: 'number', unit: 'mois' },
+      { key: 'cyclesPrevus', label: 'Cycles prévus', type: 'number', hint: '1 cycle = une charge + une décharge complètes' },
+      { key: 'essaiReference', label: "Essai de référence", type: 'text', hint: 'Norme et conditions du test qui prouve le nombre de cycles (ex: IEC 62620, 25 °C)' },
+      { key: 'dureeVieAns', label: 'Durée de vie attendue', type: 'number', unit: 'ans', hint: 'En années, pour un usage normal' },
+      { key: 'tauxC', label: 'Taux C (déprécié)', type: 'number', hint: 'Ancienne valeur unique dont on ignore ce qu\'elle mesure — à remplacer par les deux champs suivants' },
+      { key: 'tauxCCharge', label: "Taux C de charge de l'essai", type: 'number', unit: 'C', hint: 'Vitesse de charge pendant le test de cycles (1C = pleine charge en 1 h, 0,5C en 2 h)' },
+      { key: 'tauxCDecharge', label: "Taux C de décharge de l'essai", type: 'number', unit: 'C', hint: 'Même chose pour la vitesse de décharge' },
+      { key: 'rendementInitialPct', label: 'Rendement initial', type: 'number', unit: '%', hint: 'Énergie restituée / énergie injectée (aller-retour), batterie neuve' },
+      { key: 'rendement50Pct', label: 'Rendement à 50 % de vie', type: 'number', unit: '%', hint: 'Même rendement, mesuré à la moitié des cycles prévus' },
+      { key: 'resistanceInterneCelluleMohm', label: 'Résistance interne cellule', type: 'number', unit: 'mΩ', hint: 'Fiche technique du fournisseur des cellules' },
+      { key: 'resistanceInterneBatterieMohm', label: 'Résistance interne batterie', type: 'number', unit: 'mΩ', hint: 'Batterie complète, cellules assemblées (mesurée en fin de production)' },
+      { key: 'garantieMois', label: 'Garantie commerciale', type: 'number', unit: 'mois', hint: 'Lue par le passeport — la garantie réelle par client se gère sur la fiche client' },
     ],
   },
   {
     title: 'Composition et sécurité',
     icon: 'flask',
     fields: [
-      { key: 'substancesDangereuses', label: 'Substances dangereuses', type: 'list' },
-      { key: 'agentExtincteur', label: 'Agent extincteur', type: 'text' },
-      { key: 'matieresCritiques', label: 'Matières premières critiques', type: 'list' },
-      { key: 'symbolePoubelleBarree', label: 'Poubelle barrée sur l\'étiquette', type: 'boolean' },
-      { key: 'symbolesChimiques', label: 'Symboles chimiques (Cd / Pb)', type: 'symboles' },
-      { key: 'compositionCathode', label: 'Cathode (électrode +)', type: 'text', placeholder: 'Ex: LiFePO4' },
-      { key: 'compositionAnode', label: 'Anode (électrode −)', type: 'text', placeholder: 'Ex: graphite' },
-      { key: 'compositionElectrolyte', label: 'Électrolyte', type: 'text' },
+      { key: 'substancesDangereuses', label: 'Substances dangereuses', type: 'list', hint: 'Produits dangereux de la fiche de sécurité (FDS) des cellules, hors mercure/cadmium/plomb' },
+      { key: 'agentExtincteur', label: 'Agent extincteur', type: 'text', hint: 'Ce que les pompiers doivent utiliser en cas d\'incendie (FDS, rubrique incendie)' },
+      { key: 'matieresCritiques', label: 'Matières premières critiques', type: 'list', hint: 'Matières de la liste UE dépassant 0,1 % du poids (lithium, cuivre, graphite…)' },
+      { key: 'symbolePoubelleBarree', label: 'Poubelle barrée sur l\'étiquette', type: 'boolean', hint: 'Le logo « ne pas jeter aux ordures » figure-t-il sur l\'étiquette ?' },
+      { key: 'symbolesChimiques', label: 'Symboles chimiques (Cd / Pb)', type: 'symboles', hint: 'Marquage sous la poubelle barrée si cadmium ou plomb au-delà du seuil (lithium : aucun en général)' },
+      { key: 'compositionCathode', label: 'Cathode (électrode +)', type: 'text', placeholder: 'Ex: LiFePO4', hint: 'Matériau du côté positif des cellules' },
+      { key: 'compositionAnode', label: 'Anode (électrode −)', type: 'text', placeholder: 'Ex: graphite', hint: 'Matériau du côté négatif' },
+      { key: 'compositionElectrolyte', label: 'Électrolyte', type: 'text', hint: 'Le liquide conducteur à l\'intérieur des cellules' },
     ],
   },
   {
     title: 'Environnement (en attente de la réglementation UE — ne pas remplir)',
     icon: 'leaf',
     fields: [
-      { key: 'empreinteCarboneKgCo2Kwh', label: 'Empreinte carbone', type: 'number', unit: 'kg CO₂ eq/kWh' },
-      { key: 'etiquetteCarbone', label: 'Classe de performance carbone', type: 'text' },
-      { key: 'contenuRecycle', label: 'Contenu recyclé par matériau', type: 'recycle', wide: true },
-      { key: 'contenuRenouvelablePct', label: 'Contenu renouvelable', type: 'number', unit: '%' },
-      { key: 'approvisionnementResponsable', label: 'Approvisionnement responsable', type: 'text' },
+      { key: 'empreinteCarboneKgCo2Kwh', label: 'Empreinte carbone', type: 'number', unit: 'kg CO₂ eq/kWh', hint: 'CO₂ émis pour fabriquer la batterie (étude ACV déclarée)' },
+      { key: 'etiquetteCarbone', label: 'Classe de performance carbone', type: 'text', hint: 'Classe A-E de l\'étiquette carbone (règles UE pas encore publiées)' },
+      { key: 'contenuRecycle', label: 'Contenu recyclé par matériau', type: 'recycle', wide: true, hint: 'Part de matière recyclée dans chaque matériau (règles UE pas encore publiées)' },
+      { key: 'contenuRenouvelablePct', label: 'Contenu renouvelable', type: 'number', unit: '%', hint: 'Part du poids d\'origine végétale ou biologique (souvent 0 % pour une batterie)' },
+      { key: 'approvisionnementResponsable', label: 'Approvisionnement responsable', type: 'text', hint: 'Lien vers le rapport de diligence sur l\'origine des matières (exigé août 2027)' },
     ],
   },
   {
     title: 'Documents',
     icon: 'file',
     fields: [
-      { key: 'declarationUeUrl', label: 'Déclaration UE de conformité (URL)', type: 'url' },
-      { key: 'piecesDetacheesUrl', label: 'Catalogue pièces détachées (URL)', type: 'url' },
-      { key: 'planDemontage', label: 'Notice de démontage (URL)', type: 'url' },
-      { key: 'consignesSecurite', label: "Consignes d'intervention (URL)", type: 'url' },
-      { key: 'rapportsEssais', label: 'Rapports de conformité (URL)', type: 'url' },
+      { key: 'declarationUeUrl', label: 'Déclaration UE de conformité (URL)', type: 'url', hint: 'Le document officiel du marquage CE' },
+      { key: 'piecesDetacheesUrl', label: 'Catalogue pièces détachées (URL)', type: 'url', hint: 'Références des pièces remplaçables et où les commander (visible des professionnels)' },
+      { key: 'planDemontage', label: 'Notice de démontage (URL)', type: 'url', hint: 'Éclaté, étapes, fixations, outils, mises en garde (visible des professionnels)' },
+      { key: 'consignesSecurite', label: "Consignes d'intervention (URL)", type: 'url', hint: 'Précautions avant de toucher la batterie : couper le courant, gants isolants… (professionnels)' },
+      { key: 'rapportsEssais', label: 'Rapports de conformité (URL)', type: 'url', hint: 'Rapports des tests sécurité/performance (visibles des autorités seulement)' },
       // Pas de manuel ici : il dépend de la version (URL construite par
       // convention modèle + version côté passeport)
     ],
@@ -389,12 +390,12 @@ const sections = [
     title: 'Affichage passeport (hors schéma UE)',
     icon: 'eye',
     fields: [
-      { key: 'marquages', label: 'Signification des marquages', type: 'text' },
-      { key: 'referencesComposants', label: 'Références des composants', type: 'text' },
-      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'text' },
-      { key: 'outilsDemontage', label: 'Outils de démontage', type: 'text' },
-      { key: 'fixations', label: 'Fixations (type et nombre)', type: 'text' },
-      { key: 'dispositionCellules', label: 'Cellules (nombre et disposition)', type: 'text' },
+      { key: 'marquages', label: 'Signification des marquages', type: 'text', hint: 'Ce que veulent dire les logos de l\'étiquette (ex: poubelle barrée = collecte séparée)' },
+      { key: 'referencesComposants', label: 'Références des composants', type: 'text', hint: 'Références des composants remplaçables affichées sur le site du passeport' },
+      { key: 'fournisseursPieces', label: 'Fournisseurs des pièces', type: 'text', hint: 'Qui fournit les pièces détachées' },
+      { key: 'outilsDemontage', label: 'Outils de démontage', type: 'text', hint: 'Outils nécessaires pour ouvrir la batterie (ex: clé Torx T25, pince isolée)' },
+      { key: 'fixations', label: 'Fixations (type et nombre)', type: 'text', hint: 'Vis, clips… à défaire pour le démontage (ex: 8 vis M5, 4 clips)' },
+      { key: 'dispositionCellules', label: 'Cellules (nombre et disposition)', type: 'text', hint: 'Ex: 15 cellules en série, 3 rangées de 5' },
     ],
   },
 ]
@@ -798,6 +799,13 @@ onMounted(async () => {
     color: var(--text-secondary);
     font-weight: $font-weight-medium;
     letter-spacing: 0.03em;
+  }
+
+  &__hint {
+    font-size: $font-size-xs;
+    color: var(--text-tertiary);
+    line-height: 1.35;
+    margin-top: -2px;
   }
 
   &__value {
